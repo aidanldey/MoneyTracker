@@ -178,6 +178,44 @@
   margin: var(--spacing-xs) 0 0 0;
 }
 
+/* Wide Card (spans 2 columns) */
+.summary-card-wide {
+  grid-column: span 2;
+}
+
+/* Initial Expenses Card */
+#initial-expenses-card {
+  background-color: rgba(59, 130, 246, 0.05);
+  border-left: 4px solid var(--color-primary);
+}
+
+#initial-expenses-card .card-value {
+  color: var(--color-primary);
+}
+
+/* Card Link Button */
+.card-link {
+  display: inline-block;
+  background: none;
+  border: none;
+  color: var(--color-primary);
+  cursor: pointer;
+  font-weight: var(--font-weight-semibold);
+  font-size: var(--font-size-small);
+  margin-top: var(--spacing-md);
+  padding: var(--spacing-xs) 0;
+  transition: opacity 0.2s ease;
+}
+
+.card-link:hover {
+  opacity: 0.8;
+  text-decoration: underline;
+}
+
+.card-link:active {
+  opacity: 0.6;
+}
+
 /* ========================================
    BUTTONS
    ======================================== */
