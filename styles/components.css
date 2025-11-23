@@ -967,6 +967,11 @@
    INITIAL EXPENSES FORM
    ======================================== */
 
+/* Initial Expense Modal - Higher z-index to appear above the list panel */
+#initial-expense-modal {
+  z-index: 1100;
+}
+
 .initial-expense-modal .form-group textarea {
   width: 100%;
   min-height: 60px;
