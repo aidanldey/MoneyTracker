@@ -2,16 +2,19 @@
  * Income Setup Feature
  * Daily Budget Tracker
  *
- * Handles one-time income setup for MVP.
- * Collects income amount and duration, initializes budget state.
+ * Multi-step wizard for income and initial expenses setup.
+ * Step 1: Income amount and duration
+ * Step 2: Initial expenses (bills, rent, etc.)
+ * Step 3: Review and confirmation
  */
 
 import store from '../state/BudgetStore.js';
-import { getToday, addDays, formatDate, getDaysUntil } from '../utils/dateUtils.js';
+import { getToday, addDays, formatDate } from '../utils/dateUtils.js';
 import { parseMoney, validateAmount, formatMoney } from '../utils/moneyUtils.js';
+import initialExpensesForm from './InitialExpensesForm.js';
 
 /**
- * IncomeSetup class manages the income configuration modal
+ * IncomeSetup class manages the multi-step income configuration wizard
  */
 export class IncomeSetup {
   /**
@@ -20,50 +23,50 @@ export class IncomeSetup {
   constructor() {
     // Get DOM elements
     this.modal = document.getElementById('income-modal');
-    this.form = document.getElementById('income-form');
-    this.amountInput = document.getElementById('income-amount');
-    this.daysInput = document.getElementById('income-days');
-    this.closeButtons = this.modal.querySelectorAll('[data-action="close-modal"]');
-    this.overlay = this.modal.querySelector('.modal-overlay');
+    this.modalContent = this.modal.querySelector('.modal-content');
+
+    // Wizard state
+    this.currentStep = 1;
+    this.totalSteps = 3;
+    this.incomeData = null;
+    this.initialExpenses = [];
 
     // Bind methods
-    this.handleSubmit = this.handleSubmit.bind(this);
+    this.handleStep1Submit = this.handleStep1Submit.bind(this);
+    this.handleStep2Next = this.handleStep2Next.bind(this);
+    this.handleStep2Skip = this.handleStep2Skip.bind(this);
+    this.handleStep3Submit = this.handleStep3Submit.bind(this);
+    this.handleBack = this.handleBack.bind(this);
     this.handleCancel = this.handleCancel.bind(this);
-    this.handleInputChange = this.handleInputChange.bind(this);
+    this.handleAddExpense = this.handleAddExpense.bind(this);
+    this.handleRemoveExpense = this.handleRemoveExpense.bind(this);
 
-    // Initialize event listeners
-    this.initEventListeners();
+    // Listen for initial expense events
+    document.addEventListener('initial-expense-added', (e) => {
+      if (this.currentStep === 2 && this.modal && !this.modal.hasAttribute('hidden')) {
+        // Add to temporary array
+        const expense = e.detail;
+        this.initialExpenses.push({
+          description: expense.description,
+          amount: expense.amount,
+          category: expense.category || null,
+          notes: expense.notes || ''
+        });
 
-    // Check if first time user (no income set)
-    this.checkFirstTimeUser();
-  }
-
-  /**
-   * Initialize event listeners
-   * @private
-   */
-  initEventListeners() {
-    // Form submission
-    this.form.addEventListener('submit', this.handleSubmit);
-
-    // Close button clicks
-    this.closeButtons.forEach(button => {
-      button.addEventListener('click', this.handleCancel);
+        // Re-render step 2 to show new expense
+        this.renderStep2();
+      }
     });
 
-    // Overlay click to close
-    this.overlay.addEventListener('click', this.handleCancel);
-
-    // Input changes for live validation
-    this.amountInput.addEventListener('input', this.handleInputChange);
-    this.daysInput.addEventListener('input', this.handleInputChange);
-
-    // Listen for "Manage Income" button clicks
+    // Listen for manage income button clicks
     document.addEventListener('click', (e) => {
       if (e.target.matches('[data-action="manage-income"]')) {
         this.showModal();
       }
     });
+
+    // Check if first time user (no income set)
+    this.checkFirstTimeUser();
   }
 
   /**
@@ -75,7 +78,6 @@ export class IncomeSetup {
 
     // If no income has been set up, show the modal
     if (state.income.amount === 0) {
-      // Delay slightly to ensure DOM is ready
       setTimeout(() => {
         this.showModal(true);
       }, 100);
@@ -87,26 +89,20 @@ export class IncomeSetup {
    * @param {boolean} isFirstTime - Whether this is first-time setup
    */
   showModal(isFirstTime = false) {
-    // Update modal title for first-time users
-    if (isFirstTime) {
-      const title = this.modal.querySelector('.modal-title');
-      title.textContent = "Let's Start by Setting Up Your Income";
-    }
+    // Reset wizard state
+    this.currentStep = 1;
+    this.incomeData = null;
+    this.initialExpenses = [];
 
-    // Load existing values if editing
+    // Check if editing existing income
     const state = store.getState();
-    if (state.income.amount > 0) {
-      this.amountInput.value = state.income.amount;
-      this.daysInput.value = state.income.daysToLast;
-    }
+    const isEditing = state.income.amount > 0;
+
+    // Render step 1
+    this.renderStep1(isFirstTime, isEditing);
 
     // Show modal
     this.modal.removeAttribute('hidden');
-
-    // Focus on first input
-    setTimeout(() => {
-      this.amountInput.focus();
-    }, 100);
 
     // Emit event
     this.emitEvent('income-modal-opened');
@@ -118,56 +114,444 @@ export class IncomeSetup {
   hideModal() {
     this.modal.setAttribute('hidden', '');
 
-    // Reset form
-    this.form.reset();
+    // Reset state
+    this.currentStep = 1;
+    this.incomeData = null;
+    this.initialExpenses = [];
 
-    // Reset title to default
-    const title = this.modal.querySelector('.modal-title');
-    title.textContent = 'Setup Income';
+    // Disable wizard mode in InitialExpensesForm
+    if (initialExpensesForm) {
+      initialExpensesForm.wizardMode = false;
+      initialExpensesForm.wizardIncome = 0;
+    }
 
     // Emit event
     this.emitEvent('income-modal-closed');
   }
 
   /**
-   * Handle form submission
+   * Render Step 1: Income Setup
    * @private
-   * @param {Event} e - Form submit event
    */
-  handleSubmit(e) {
+  renderStep1(isFirstTime = false, isEditing = false) {
+    const state = store.getState();
+    const existingAmount = isEditing ? state.income.amount : '';
+    const existingDays = isEditing ? state.income.daysToLast : '';
+
+    const title = isFirstTime
+      ? "Let's Start by Setting Up Your Income"
+      : isEditing
+        ? 'Update Income'
+        : 'Set Up Your Income';
+
+    this.modalContent.innerHTML = `
+      <div class="modal-header">
+        <h2 class="modal-title">${title}</h2>
+        <span class="step-indicator">[1/${this.totalSteps}]</span>
+      </div>
+
+      <div class="modal-body">
+        <form id="income-step1-form">
+          <div class="form-group">
+            <label for="income-amount">Income Amount</label>
+            <input
+              type="number"
+              id="income-amount"
+              name="amount"
+              placeholder="0.00"
+              step="0.01"
+              min="0.01"
+              value="${existingAmount}"
+              required
+              autofocus>
+          </div>
+
+          <div class="form-group">
+            <label for="income-days">Days to Last</label>
+            <input
+              type="number"
+              id="income-days"
+              name="days"
+              placeholder="14"
+              min="1"
+              max="365"
+              value="${existingDays}"
+              required>
+          </div>
+
+          <div class="modal-actions">
+            <button
+              type="button"
+              class="btn btn-secondary"
+              id="cancel-btn">
+              Cancel
+            </button>
+            <button
+              type="submit"
+              class="btn btn-primary">
+              Next: Add Obligations →
+            </button>
+          </div>
+        </form>
+      </div>
+    `;
+
+    // Set up event listeners
+    const form = document.getElementById('income-step1-form');
+    const cancelBtn = document.getElementById('cancel-btn');
+
+    form.addEventListener('submit', this.handleStep1Submit);
+    cancelBtn.addEventListener('click', this.handleCancel);
+
+    // Focus on first input
+    setTimeout(() => {
+      document.getElementById('income-amount').focus();
+    }, 100);
+  }
+
+  /**
+   * Render Step 2: Initial Expenses
+   * @private
+   */
+  renderStep2() {
+    // Enable wizard mode in InitialExpensesForm
+    if (initialExpensesForm) {
+      initialExpensesForm.wizardMode = true;
+      initialExpensesForm.wizardIncome = this.incomeData.amount;
+    }
+
+    const totalExpenses = this.initialExpenses.reduce((sum, exp) => sum + exp.amount, 0);
+    const availableAfterExpenses = this.incomeData.amount - totalExpenses;
+
+    const expenseListHTML = this.initialExpenses.length === 0
+      ? '<p class="empty-state">No initial expenses added yet. Skip this step if you don\'t have any.</p>'
+      : this.initialExpenses.map((expense, index) => `
+          <div class="temp-expense-item" data-index="${index}">
+            <div class="temp-expense-info">
+              <p class="temp-expense-description">${this.escapeHtml(expense.description)}</p>
+              ${expense.category ? `<span class="category-badge">${expense.category}</span>` : ''}
+              <p class="temp-expense-amount money-value">${formatMoney(expense.amount)}</p>
+            </div>
+            <button
+              type="button"
+              class="btn btn-small btn-danger"
+              data-index="${index}"
+              data-action="remove-temp-expense">
+              Remove
+            </button>
+          </div>
+        `).join('');
+
+    this.modalContent.innerHTML = `
+      <div class="modal-header">
+        <h2 class="modal-title">Initial Expenses</h2>
+        <span class="step-indicator">[2/${this.totalSteps}]</span>
+      </div>
+
+      <div class="modal-body">
+        <div class="step-description">
+          <p>Add your financial obligations (bills, rent, subscriptions, etc.)</p>
+          <p class="help-text">These will be reserved from your available balance to ensure you don't overspend.</p>
+        </div>
+
+        <div class="temp-expenses-list">
+          ${expenseListHTML}
+        </div>
+
+        <button
+          type="button"
+          class="btn btn-secondary btn-block"
+          id="add-expense-btn"
+          data-action="add-initial-expense">
+          + Add Initial Expense
+        </button>
+
+        <div class="step2-summary">
+          <h3>Summary</h3>
+          <div class="summary-row">
+            <span>Income:</span>
+            <span class="money-value">${formatMoney(this.incomeData.amount)}</span>
+          </div>
+          <div class="summary-row">
+            <span>Initial Expenses:</span>
+            <span class="money-value">${formatMoney(totalExpenses)}</span>
+          </div>
+          <div class="summary-row total">
+            <span>Available:</span>
+            <span class="money-value ${availableAfterExpenses < 0 ? 'negative' : ''}">${formatMoney(availableAfterExpenses)}</span>
+          </div>
+          ${availableAfterExpenses < 0 ? '<p class="warning-text">⚠️ Your expenses exceed your income!</p>' : ''}
+        </div>
+
+        <div class="modal-actions">
+          <button
+            type="button"
+            class="btn btn-secondary"
+            id="back-btn">
+            ← Back
+          </button>
+          <button
+            type="button"
+            class="btn btn-secondary"
+            id="skip-btn">
+            Skip
+          </button>
+          <button
+            type="button"
+            class="btn btn-primary"
+            id="next-btn"
+            ${availableAfterExpenses < 0 ? 'disabled' : ''}>
+            Next: Review →
+          </button>
+        </div>
+      </div>
+    `;
+
+    // Set up event listeners
+    const backBtn = document.getElementById('back-btn');
+    const skipBtn = document.getElementById('skip-btn');
+    const nextBtn = document.getElementById('next-btn');
+    const removeButtons = document.querySelectorAll('[data-action="remove-temp-expense"]');
+
+    backBtn.addEventListener('click', this.handleBack);
+    skipBtn.addEventListener('click', this.handleStep2Skip);
+    nextBtn.addEventListener('click', this.handleStep2Next);
+
+    removeButtons.forEach(btn => {
+      btn.addEventListener('click', this.handleRemoveExpense);
+    });
+  }
+
+  /**
+   * Render Step 3: Review and Confirm
+   * @private
+   */
+  renderStep3() {
+    const totalExpenses = this.initialExpenses.reduce((sum, exp) => sum + exp.amount, 0);
+    const availableBalance = this.incomeData.amount - totalExpenses;
+    const dailyBudget = this.incomeData.days > 0
+      ? availableBalance / this.incomeData.days
+      : 0;
+
+    const endDate = addDays(this.incomeData.startDate, this.incomeData.days);
+
+    const expensesListHTML = this.initialExpenses.length === 0
+      ? '<p class="empty-state">No initial expenses</p>'
+      : this.initialExpenses.map(expense => `
+          <div class="review-expense-item">
+            <span>• ${this.escapeHtml(expense.description)}</span>
+            <span class="money-value">${formatMoney(expense.amount)}</span>
+          </div>
+        `).join('');
+
+    this.modalContent.innerHTML = `
+      <div class="modal-header">
+        <h2 class="modal-title">Review & Confirm</h2>
+        <span class="step-indicator">[3/${this.totalSteps}]</span>
+      </div>
+
+      <div class="modal-body">
+        <div class="review-section">
+          <h3>Pay Period</h3>
+          <p><strong>${this.incomeData.days}</strong> days</p>
+          <p class="help-text">Ends: ${formatDate(endDate, 'long')}</p>
+        </div>
+
+        <div class="review-section">
+          <h3>Budget Breakdown</h3>
+          <div class="breakdown-row">
+            <span>Starting Balance:</span>
+            <span class="money-value">${formatMoney(this.incomeData.amount)}</span>
+          </div>
+          <div class="breakdown-row">
+            <span>Initial Expenses:</span>
+            <span class="money-value">${formatMoney(totalExpenses)}</span>
+          </div>
+          <div class="breakdown-row total">
+            <span>Available Balance:</span>
+            <span class="money-value">${formatMoney(availableBalance)}</span>
+          </div>
+        </div>
+
+        <div class="review-section highlight">
+          <h3>Your Daily Budget</h3>
+          <p class="daily-budget-preview money-value">${formatMoney(dailyBudget)}</p>
+          <p class="help-text">(Available Balance ÷ ${this.incomeData.days} days)</p>
+        </div>
+
+        ${this.initialExpenses.length > 0 ? `
+          <div class="review-section">
+            <h3>Initial Expenses (${this.initialExpenses.length})</h3>
+            <div class="review-expenses-list">
+              ${expensesListHTML}
+            </div>
+          </div>
+        ` : ''}
+
+        <div class="modal-actions">
+          <button
+            type="button"
+            class="btn btn-secondary"
+            id="back-btn">
+            ← Back
+          </button>
+          <button
+            type="button"
+            class="btn btn-primary"
+            id="start-tracking-btn">
+            Start Tracking
+          </button>
+        </div>
+      </div>
+    `;
+
+    // Set up event listeners
+    const backBtn = document.getElementById('back-btn');
+    const startBtn = document.getElementById('start-tracking-btn');
+
+    backBtn.addEventListener('click', this.handleBack);
+    startBtn.addEventListener('click', this.handleStep3Submit);
+  }
+
+  /**
+   * Handle Step 1 form submission
+   * @private
+   */
+  handleStep1Submit(e) {
     e.preventDefault();
 
-    // Validate inputs
-    const validation = this.validateInputs();
+    const amountInput = document.getElementById('income-amount');
+    const daysInput = document.getElementById('income-days');
 
-    if (!validation.valid) {
-      alert(validation.error);
+    const amount = parseMoney(amountInput.value);
+    const days = parseInt(daysInput.value, 10);
+
+    // Validate
+    if (!validateAmount(amount) || amount <= 0) {
+      alert('Please enter a valid income amount greater than $0.');
+      amountInput.focus();
       return;
     }
 
-    // Save income
-    const success = this.saveIncome(validation.amount, validation.days);
+    if (isNaN(days) || days < 1 || days > 365) {
+      alert('Please enter a valid number of days (1-365).');
+      daysInput.focus();
+      return;
+    }
 
-    if (success) {
+    // Store income data temporarily
+    this.incomeData = {
+      amount,
+      days,
+      startDate: getToday()
+    };
+
+    // Go to step 2
+    this.currentStep = 2;
+    this.renderStep2();
+  }
+
+  /**
+   * Handle Step 2 Next button
+   * @private
+   */
+  handleStep2Next() {
+    // Validate that expenses don't exceed income
+    const totalExpenses = this.initialExpenses.reduce((sum, exp) => sum + exp.amount, 0);
+
+    if (totalExpenses > this.incomeData.amount) {
+      alert('Your initial expenses exceed your income. Please adjust before continuing.');
+      return;
+    }
+
+    // Go to step 3
+    this.currentStep = 3;
+    this.renderStep3();
+  }
+
+  /**
+   * Handle Step 2 Skip button
+   * @private
+   */
+  handleStep2Skip() {
+    // Clear expenses and go to step 3
+    this.initialExpenses = [];
+    this.currentStep = 3;
+    this.renderStep3();
+  }
+
+  /**
+   * Handle Step 3 final submission
+   * @private
+   */
+  handleStep3Submit() {
+    try {
+      // Save income to BudgetStore
+      const incomeSuccess = store.setupIncome(this.incomeData.amount, this.incomeData.days);
+
+      if (!incomeSuccess) {
+        alert('Failed to save income. Please try again.');
+        return;
+      }
+
+      // Add each initial expense
+      let expensesSuccess = true;
+      for (const expense of this.initialExpenses) {
+        const success = store.addInitialExpense(expense);
+        if (!success) {
+          console.error('Failed to add initial expense:', expense);
+          expensesSuccess = false;
+          break;
+        }
+      }
+
+      if (!expensesSuccess) {
+        alert('Some initial expenses could not be saved. Please check the console for details.');
+        return;
+      }
+
+      // Success!
+      console.log('Setup complete:', {
+        income: formatMoney(this.incomeData.amount),
+        days: this.incomeData.days,
+        initialExpenses: this.initialExpenses.length
+      });
+
+      // Hide modal
       this.hideModal();
 
       // Emit success event
-      this.emitEvent('income-saved', {
-        amount: validation.amount,
-        days: validation.days
+      this.emitEvent('income-setup-complete', {
+        income: this.incomeData,
+        initialExpenses: this.initialExpenses
       });
-    } else {
-      alert('Failed to save income. Please try again.');
+
+    } catch (error) {
+      console.error('Error completing setup:', error);
+      alert('An error occurred during setup. Please try again.');
     }
   }
 
   /**
-   * Handle cancel/close action
+   * Handle back button click
    * @private
-   * @param {Event} e - Click event
+   */
+  handleBack() {
+    if (this.currentStep === 2) {
+      this.currentStep = 1;
+      this.renderStep1(false, false);
+    } else if (this.currentStep === 3) {
+      this.currentStep = 2;
+      this.renderStep2();
+    }
+  }
+
+  /**
+   * Handle cancel button click
+   * @private
    */
   handleCancel(e) {
-    e.preventDefault();
+    if (e) e.preventDefault();
 
     // Check if income has been set up
     const state = store.getState();
@@ -186,106 +570,49 @@ export class IncomeSetup {
   }
 
   /**
-   * Handle input changes for live validation feedback
+   * Handle adding an expense (Step 2)
    * @private
    */
-  handleInputChange() {
-    // Remove invalid styling when user starts typing
-    this.amountInput.classList.remove('error');
-    this.daysInput.classList.remove('error');
+  handleAddExpense() {
+    // The InitialExpensesForm will handle this
+    // We listen for the 'initial-expense-added' event in constructor
   }
 
   /**
-   * Validate form inputs
+   * Handle removing a temporary expense (Step 2)
    * @private
-   * @returns {Object} Validation result with valid flag, error message, and parsed values
    */
-  validateInputs() {
-    const amountValue = this.amountInput.value.trim();
-    const daysValue = this.daysInput.value.trim();
+  handleRemoveExpense(e) {
+    const index = parseInt(e.target.dataset.index, 10);
 
-    // Check if inputs are empty
-    if (!amountValue || !daysValue) {
-      return {
-        valid: false,
-        error: 'Please fill in all fields.'
-      };
+    if (isNaN(index) || index < 0 || index >= this.initialExpenses.length) {
+      return;
     }
 
-    // Parse amount
-    const amount = parseMoney(amountValue);
+    const expense = this.initialExpenses[index];
+    const confirmed = confirm(`Remove "${expense.description}"?`);
 
-    // Validate amount
-    if (!validateAmount(amount) || amount <= 0) {
-      this.amountInput.classList.add('error');
-      return {
-        valid: false,
-        error: 'Please enter a valid income amount greater than $0.'
-      };
+    if (!confirmed) {
+      return;
     }
 
-    // Parse days
-    const days = parseInt(daysValue, 10);
+    // Remove from array
+    this.initialExpenses.splice(index, 1);
 
-    // Validate days
-    if (isNaN(days) || days < 1) {
-      this.daysInput.classList.add('error');
-      return {
-        valid: false,
-        error: 'Please enter a valid number of days (at least 1).'
-      };
-    }
-
-    if (days > 365) {
-      this.daysInput.classList.add('error');
-      return {
-        valid: false,
-        error: 'Days to last cannot exceed 365 days.'
-      };
-    }
-
-    return {
-      valid: true,
-      amount,
-      days
-    };
+    // Re-render step 2
+    this.renderStep2();
   }
 
   /**
-   * Calculate end date based on start date and days
-   * @param {Date} startDate - The start date
-   * @param {number} days - Number of days to last
-   * @returns {Date} The calculated end date
-   */
-  calculateEndDate(startDate, days) {
-    return addDays(startDate, days);
-  }
-
-  /**
-   * Save income to BudgetStore and initialize budget
+   * Escape HTML to prevent XSS
    * @private
-   * @param {number} amount - Income amount
-   * @param {number} days - Days to last
-   * @returns {boolean} Success status
+   * @param {string} text - Text to escape
+   * @returns {string} Escaped text
    */
-  saveIncome(amount, days) {
-    try {
-      // Use BudgetStore's setupIncome method
-      const success = store.setupIncome(amount, days);
-
-      if (success) {
-        console.log('Income saved successfully:', {
-          amount: formatMoney(amount),
-          days,
-          dailyBudget: formatMoney(amount / days)
-        });
-      }
-
-      return success;
-    } catch (error) {
-      console.error('Error saving income:', error);
-      return false;
-    }
+  escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
   }
 
   /**
@@ -300,32 +627,6 @@ export class IncomeSetup {
       bubbles: true
     });
     document.dispatchEvent(event);
-  }
-
-  /**
-   * Get preview of budget based on current inputs
-   * @returns {Object|null} Preview data or null if invalid
-   */
-  getPreview() {
-    const validation = this.validateInputs();
-
-    if (!validation.valid) {
-      return null;
-    }
-
-    const startDate = getToday();
-    const endDate = this.calculateEndDate(startDate, validation.days);
-    const dailyBudget = validation.amount / validation.days;
-
-    return {
-      amount: validation.amount,
-      days: validation.days,
-      startDate,
-      endDate,
-      endDateFormatted: formatDate(endDate, 'long'),
-      dailyBudget,
-      dailyBudgetFormatted: formatMoney(dailyBudget)
-    };
   }
 }
 

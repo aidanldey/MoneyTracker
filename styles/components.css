@@ -581,6 +581,231 @@
 }
 
 /* ========================================
+   INCOME SETUP WIZARD
+   ======================================== */
+
+/* Step Indicator */
+.step-indicator {
+  font-size: var(--font-size-small);
+  color: var(--color-text);
+  opacity: 0.6;
+  font-weight: var(--font-weight-medium);
+  margin-left: var(--spacing-md);
+}
+
+/* Step Description */
+.step-description {
+  margin-bottom: var(--spacing-xl);
+}
+
+.step-description p {
+  margin: 0 0 var(--spacing-sm) 0;
+  color: var(--color-text);
+}
+
+.help-text {
+  font-size: var(--font-size-small);
+  color: var(--color-text);
+  opacity: 0.6;
+  margin: 0;
+}
+
+.warning-text {
+  font-size: var(--font-size-small);
+  color: var(--color-status-danger);
+  font-weight: var(--font-weight-medium);
+  margin: var(--spacing-sm) 0 0 0;
+}
+
+/* Temporary Expenses List (Step 2) */
+.temp-expenses-list {
+  margin: var(--spacing-lg) 0;
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+.temp-expense-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--spacing-md);
+  padding: var(--spacing-md);
+  background-color: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  margin-bottom: var(--spacing-md);
+}
+
+.temp-expense-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.temp-expense-description {
+  font-size: var(--font-size-base);
+  font-weight: var(--font-weight-medium);
+  color: var(--color-text);
+  margin: 0 0 var(--spacing-xs) 0;
+  overflow-wrap: break-word;
+}
+
+.temp-expense-amount {
+  font-size: var(--font-size-base);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text);
+  margin: var(--spacing-xs) 0 0 0;
+}
+
+/* Step 2 Summary Box */
+.step2-summary {
+  background-color: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: var(--spacing-lg);
+  margin: var(--spacing-xl) 0;
+}
+
+.step2-summary h3 {
+  font-size: var(--font-size-base);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text);
+  margin: 0 0 var(--spacing-md) 0;
+}
+
+.summary-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--spacing-sm) 0;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.summary-row:last-of-type {
+  border-bottom: none;
+}
+
+.summary-row.total {
+  margin-top: var(--spacing-sm);
+  padding-top: var(--spacing-md);
+  border-top: 2px solid var(--color-border);
+  font-weight: var(--font-weight-semibold);
+}
+
+.summary-row span:first-child {
+  font-size: var(--font-size-small);
+  color: var(--color-text);
+  opacity: 0.7;
+}
+
+.summary-row span:last-child {
+  font-size: var(--font-size-base);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text);
+}
+
+.summary-row .negative {
+  color: var(--color-status-danger);
+}
+
+/* Review Section (Step 3) */
+.review-section {
+  margin-bottom: var(--spacing-2xl);
+  padding-bottom: var(--spacing-lg);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.review-section:last-of-type {
+  border-bottom: none;
+}
+
+.review-section h3 {
+  font-size: var(--font-size-base);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text);
+  margin: 0 0 var(--spacing-md) 0;
+}
+
+.review-section p {
+  margin: var(--spacing-xs) 0;
+  color: var(--color-text);
+}
+
+.review-section.highlight {
+  background-color: rgba(59, 130, 246, 0.05);
+  border: 2px solid var(--color-primary);
+  border-radius: var(--radius-md);
+  padding: var(--spacing-lg);
+  text-align: center;
+}
+
+.daily-budget-preview {
+  font-size: var(--font-size-hero);
+  font-weight: var(--font-weight-bold);
+  color: var(--color-primary);
+  margin: var(--spacing-md) 0;
+  line-height: 1;
+}
+
+/* Breakdown Rows */
+.breakdown-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--spacing-sm) 0;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.breakdown-row:last-of-type {
+  border-bottom: none;
+}
+
+.breakdown-row.total {
+  margin-top: var(--spacing-sm);
+  padding-top: var(--spacing-md);
+  border-top: 2px solid var(--color-border);
+  font-weight: var(--font-weight-semibold);
+}
+
+.breakdown-row span:first-child {
+  font-size: var(--font-size-small);
+  color: var(--color-text);
+  opacity: 0.7;
+}
+
+.breakdown-row span:last-child {
+  font-size: var(--font-size-base);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text);
+}
+
+/* Review Expenses List */
+.review-expenses-list {
+  background-color: var(--color-surface);
+  border-radius: var(--radius-md);
+  padding: var(--spacing-md);
+}
+
+.review-expense-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--spacing-sm) 0;
+  font-size: var(--font-size-small);
+  color: var(--color-text);
+}
+
+.review-expense-item span:first-child {
+  flex: 1;
+  min-width: 0;
+  overflow-wrap: break-word;
+}
+
+.review-expense-item span:last-child {
+  font-weight: var(--font-weight-semibold);
+  margin-left: var(--spacing-md);
+}
+
+/* ========================================
    INITIAL EXPENSES FORM
    ======================================== */
 

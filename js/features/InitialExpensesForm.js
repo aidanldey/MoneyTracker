@@ -41,6 +41,10 @@ export class InitialExpensesForm {
     this.previewFund = this.modal.querySelector('.preview-fund');
     this.previewBudget = this.modal.querySelector('.preview-budget');
 
+    // Wizard mode support
+    this.wizardMode = false;
+    this.wizardIncome = 0;
+
     // Bind methods
     this.handleSubmit = this.handleSubmit.bind(this);
     this.handleCancel = this.handleCancel.bind(this);
@@ -100,11 +104,13 @@ export class InitialExpensesForm {
       return;
     }
 
-    // Check if income has been set up
-    const state = store.getState();
-    if (state.income.amount === 0) {
-      alert('Please set up your income first before adding initial expenses.');
-      return;
+    // Check if income has been set up (skip during wizard mode)
+    if (!this.wizardMode) {
+      const state = store.getState();
+      if (state.income.amount === 0) {
+        alert('Please set up your income first before adding initial expenses.');
+        return;
+      }
     }
 
     // Reset form
@@ -207,15 +213,23 @@ export class InitialExpensesForm {
       };
     }
 
-    // Check against current balance
-    const state = store.getState();
-    const currentBalance = state.budget.currentBalance;
+    // Check against current balance (or wizard income)
+    let availableBalance;
 
-    if (amount > currentBalance) {
+    if (this.wizardMode) {
+      // During wizard, check against the temporary income amount
+      availableBalance = this.wizardIncome;
+    } else {
+      // Normal mode: check against current balance
+      const state = store.getState();
+      availableBalance = state.budget.currentBalance;
+    }
+
+    if (amount > availableBalance) {
       return {
         valid: false,
         amount,
-        error: `Insufficient funds. You have ${formatMoney(currentBalance)} available.`
+        error: `Insufficient funds. You have ${formatMoney(availableBalance)} available.`
       };
     }
 
@@ -267,6 +281,11 @@ export class InitialExpensesForm {
    * @param {number} amount - Initial expense amount
    */
   updatePreview(amount) {
+    // In wizard mode, preview is not shown (no elements in modal)
+    if (this.wizardMode) {
+      return;
+    }
+
     const state = store.getState();
 
     // Calculate new fund total
