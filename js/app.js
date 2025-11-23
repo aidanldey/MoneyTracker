@@ -10,6 +10,8 @@ import store from './state/BudgetStore.js';
 import dashboard from './features/Dashboard.js';
 import incomeSetup from './features/IncomeSetup.js';
 import expenseForm from './features/ExpenseForm.js';
+import initialExpensesForm from './features/InitialExpensesForm.js';
+import initialExpensesList from './features/InitialExpensesList.js';
 import { getToday } from './utils/dateUtils.js';
 
 /**
