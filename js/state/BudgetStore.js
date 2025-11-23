@@ -444,18 +444,13 @@ export class BudgetStore {
     // Add to items array
     const updatedItems = [...this.state.initialExpenses.items, newInitialExpense];
 
-    // Update fund and totals
+    // Update fund and totals (RESERVE funds, don't deduct from balance yet)
     const newFund = this.state.initialExpenses.fund + expense.amount;
     const newTotalCommitted = this.state.initialExpenses.totalCommitted + expense.amount;
 
-    // Deduct from current balance
-    const newBalance = this.calculator.subtractExpense(
-      this.state.budget.currentBalance,
-      expense.amount
-    );
-
-    // Recalculate daily budget (accounting for initial expenses fund)
-    const availableBalance = newBalance - newFund;
+    // Recalculate daily budget (accounting for reserved funds)
+    // Balance stays the same, but available balance for daily budget is reduced
+    const availableBalance = this.state.budget.currentBalance - newFund;
     const newDailyBudget = this.calculator.calculateDailyBudget(
       availableBalance,
       this.state.budget.daysRemaining
@@ -471,7 +466,7 @@ export class BudgetStore {
       },
       budget: {
         ...this.state.budget,
-        currentBalance: newBalance,
+        // Balance stays the same - only reserved, not spent yet
         dailyBudget: newDailyBudget
       }
     });
@@ -501,15 +496,13 @@ export class BudgetStore {
     // Remove from items array
     const updatedItems = this.state.initialExpenses.items.filter(e => e.id !== expenseId);
 
-    // Update fund and totals
+    // Update fund and totals (UNRESERVE funds)
     const newFund = this.state.initialExpenses.fund - expense.amount;
     const newTotalCommitted = this.state.initialExpenses.totalCommitted - expense.amount;
 
-    // Add amount back to current balance
-    const newBalance = this.state.budget.currentBalance + expense.amount;
-
-    // Recalculate daily budget
-    const availableBalance = newBalance - newFund;
+    // Recalculate daily budget (more funds available now)
+    // Balance stays the same - we're just unreserving, not adding money back
+    const availableBalance = this.state.budget.currentBalance - newFund;
     const newDailyBudget = this.calculator.calculateDailyBudget(
       availableBalance,
       this.state.budget.daysRemaining
@@ -525,7 +518,7 @@ export class BudgetStore {
       },
       budget: {
         ...this.state.budget,
-        currentBalance: newBalance,
+        // Balance stays the same - we only unreserved, didn't add money
         dailyBudget: newDailyBudget
       }
     });
@@ -566,8 +559,14 @@ export class BudgetStore {
     const newFund = this.state.initialExpenses.fund - expense.amount;
     const newTotalPaid = this.state.initialExpenses.totalPaid + expense.amount;
 
-    // Recalculate daily budget (more money available now)
-    const availableBalance = this.state.budget.currentBalance - newFund;
+    // NOW deduct from balance (actually spending the money)
+    const newBalance = this.calculator.subtractExpense(
+      this.state.budget.currentBalance,
+      expense.amount
+    );
+
+    // Recalculate daily budget
+    const availableBalance = newBalance - newFund;
     const newDailyBudget = this.calculator.calculateDailyBudget(
       availableBalance,
       this.state.budget.daysRemaining
@@ -583,6 +582,7 @@ export class BudgetStore {
       },
       budget: {
         ...this.state.budget,
+        currentBalance: newBalance, // Balance decreases when marked as paid
         dailyBudget: newDailyBudget
       }
     });
