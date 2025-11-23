@@ -12,8 +12,331 @@
   <link rel="stylesheet" href="styles/components.css">
 </head>
 <body>
-  <!-- Application content will be added here -->
-  <div id="app"></div>
+  <div id="app">
+    <!-- HEADER -->
+    <header class="app-header">
+      <h1 class="app-title">Daily Budget Tracker</h1>
+      <button
+        class="icon-button"
+        data-action="open-settings"
+        aria-label="Open settings">
+        ⚙️
+      </button>
+    </header>
+
+    <!-- MAIN CONTENT -->
+    <main class="main-content">
+      <!-- HERO SECTION -->
+      <section class="hero-section" aria-labelledby="remaining-label">
+        <p class="hero-label">You have</p>
+        <div class="hero-amount-container">
+          <span
+            class="hero-amount money-value"
+            data-value="remaining-today"
+            aria-live="polite">
+            $0.00
+          </span>
+          <span
+            class="status-indicator"
+            data-status="good"
+            aria-label="Budget status: good">
+          </span>
+        </div>
+        <p class="hero-sublabel" id="remaining-label">remaining today</p>
+      </section>
+
+      <!-- SUMMARY CARDS -->
+      <section class="summary-cards" aria-label="Budget summary">
+        <div class="card-grid">
+          <!-- Card 1: Total Balance -->
+          <div class="summary-card" data-card="balance">
+            <h2 class="card-label">Total Balance</h2>
+            <p class="card-value money-value" data-value="total-balance">
+              $0.00
+            </p>
+          </div>
+
+          <!-- Card 2: Savings Fund -->
+          <div class="summary-card" data-card="savings">
+            <h2 class="card-label">Savings Fund</h2>
+            <p class="card-value money-value" data-value="savings-fund">
+              $0.00
+            </p>
+          </div>
+
+          <!-- Card 3: Daily Budget -->
+          <div class="summary-card" data-card="daily-budget">
+            <h2 class="card-label">Daily Budget</h2>
+            <p class="card-value money-value" data-value="daily-budget">
+              $0.00
+            </p>
+          </div>
+
+          <!-- Card 4: Days Left -->
+          <div class="summary-card" data-card="days-left">
+            <h2 class="card-label">Days Left</h2>
+            <p class="card-value" data-value="days-remaining">
+              <span class="days-number">0</span> days
+            </p>
+            <p class="card-sublabel" data-value="end-date">
+              Until: --/--/----
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <!-- QUICK ACTIONS -->
+      <section class="quick-actions" aria-label="Quick actions">
+        <button
+          class="btn btn-primary"
+          data-action="add-expense"
+          aria-label="Add a new expense">
+          Add Expense
+        </button>
+        <button
+          class="btn btn-secondary"
+          data-action="manage-income"
+          aria-label="Manage income settings">
+          Manage Income
+        </button>
+      </section>
+
+      <!-- TODAY'S EXPENSES -->
+      <section class="today-expenses" aria-labelledby="today-expenses-heading">
+        <div class="section-header">
+          <h2 id="today-expenses-heading" class="section-title">
+            Today: <span class="money-value" data-value="today-spent">$0.00</span>
+          </h2>
+          <button
+            class="icon-button toggle-button"
+            data-action="toggle-expenses"
+            aria-expanded="true"
+            aria-controls="expense-list"
+            aria-label="Toggle expense list">
+            ▼
+          </button>
+        </div>
+
+        <div
+          id="expense-list"
+          class="expense-list"
+          data-list="today-expenses"
+          aria-live="polite">
+          <p class="empty-state">No expenses today</p>
+        </div>
+
+        <a
+          href="#"
+          class="view-all-link"
+          data-action="view-all-expenses"
+          aria-label="View all expenses">
+          View All Expenses
+        </a>
+      </section>
+    </main>
+
+    <!-- MODALS -->
+
+    <!-- Income Setup Modal -->
+    <div
+      id="income-modal"
+      class="modal"
+      data-modal="income"
+      role="dialog"
+      aria-labelledby="income-modal-title"
+      aria-modal="true"
+      hidden>
+      <div class="modal-overlay" data-action="close-modal"></div>
+      <div class="modal-content">
+        <div class="modal-header">
+          <h2 id="income-modal-title" class="modal-title">Setup Income</h2>
+          <button
+            class="icon-button"
+            data-action="close-modal"
+            aria-label="Close modal">
+            ✕
+          </button>
+        </div>
+
+        <div class="modal-body">
+          <form id="income-form" data-form="income">
+            <div class="form-group">
+              <label for="income-amount">Income Amount</label>
+              <input
+                type="number"
+                id="income-amount"
+                name="amount"
+                placeholder="0.00"
+                step="0.01"
+                min="0"
+                required
+                aria-required="true">
+            </div>
+
+            <div class="form-group">
+              <label for="income-days">Days to Last</label>
+              <input
+                type="number"
+                id="income-days"
+                name="days"
+                placeholder="14"
+                min="1"
+                required
+                aria-required="true">
+            </div>
+
+            <div class="modal-actions">
+              <button
+                type="button"
+                class="btn btn-secondary"
+                data-action="close-modal">
+                Cancel
+              </button>
+              <button
+                type="submit"
+                class="btn btn-primary">
+                Setup Income
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+
+    <!-- Add Expense Modal -->
+    <div
+      id="expense-modal"
+      class="modal"
+      data-modal="expense"
+      role="dialog"
+      aria-labelledby="expense-modal-title"
+      aria-modal="true"
+      hidden>
+      <div class="modal-overlay" data-action="close-modal"></div>
+      <div class="modal-content">
+        <div class="modal-header">
+          <h2 id="expense-modal-title" class="modal-title">Add Expense</h2>
+          <button
+            class="icon-button"
+            data-action="close-modal"
+            aria-label="Close modal">
+            ✕
+          </button>
+        </div>
+
+        <div class="modal-body">
+          <form id="expense-form" data-form="expense">
+            <div class="form-group">
+              <label for="expense-amount">Amount</label>
+              <input
+                type="number"
+                id="expense-amount"
+                name="amount"
+                placeholder="0.00"
+                step="0.01"
+                min="0.01"
+                required
+                aria-required="true">
+            </div>
+
+            <div class="form-group">
+              <label for="expense-description">Description</label>
+              <input
+                type="text"
+                id="expense-description"
+                name="description"
+                placeholder="What did you spend on?"
+                maxlength="100">
+            </div>
+
+            <div class="form-group">
+              <label for="expense-category">Category</label>
+              <select
+                id="expense-category"
+                name="category">
+                <option value="food">Food & Dining</option>
+                <option value="transport">Transportation</option>
+                <option value="shopping">Shopping</option>
+                <option value="entertainment">Entertainment</option>
+                <option value="bills">Bills & Utilities</option>
+                <option value="health">Health & Wellness</option>
+                <option value="other" selected>Other</option>
+              </select>
+            </div>
+
+            <div class="modal-actions">
+              <button
+                type="button"
+                class="btn btn-secondary"
+                data-action="close-modal">
+                Cancel
+              </button>
+              <button
+                type="submit"
+                class="btn btn-primary">
+                Add Expense
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+
+    <!-- End of Day Modal -->
+    <div
+      id="eod-modal"
+      class="modal"
+      data-modal="end-of-day"
+      role="dialog"
+      aria-labelledby="eod-modal-title"
+      aria-modal="true"
+      hidden>
+      <div class="modal-overlay" data-action="close-modal"></div>
+      <div class="modal-content">
+        <div class="modal-header">
+          <h2 id="eod-modal-title" class="modal-title">End of Day Summary</h2>
+          <button
+            class="icon-button"
+            data-action="close-modal"
+            aria-label="Close modal">
+            ✕
+          </button>
+        </div>
+
+        <div class="modal-body">
+          <div class="eod-summary">
+            <p class="eod-message" data-value="eod-message">
+              Great job staying within budget!
+            </p>
+
+            <div class="eod-stats">
+              <div class="eod-stat">
+                <span class="eod-label">Budget:</span>
+                <span class="eod-value money-value" data-value="eod-budget">$0.00</span>
+              </div>
+              <div class="eod-stat">
+                <span class="eod-label">Spent:</span>
+                <span class="eod-value money-value" data-value="eod-spent">$0.00</span>
+              </div>
+              <div class="eod-stat">
+                <span class="eod-label">Remaining:</span>
+                <span class="eod-value money-value" data-value="eod-remaining">$0.00</span>
+              </div>
+            </div>
+
+            <div class="modal-actions">
+              <button
+                type="button"
+                class="btn btn-primary"
+                data-action="close-modal">
+                Continue
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
 
   <!-- Scripts -->
   <script type="module" src="js/app.js"></script>
