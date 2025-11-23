@@ -45,6 +45,17 @@ export class BudgetStore {
       if (savedState.budget && savedState.budget.cycleEndDate) {
         savedState.budget.daysRemaining = getDaysUntil(savedState.budget.cycleEndDate);
       }
+
+      // Backward compatibility: Add initialExpenses if missing
+      if (!savedState.initialExpenses) {
+        savedState.initialExpenses = {
+          fund: 0,
+          totalCommitted: 0,
+          totalPaid: 0,
+          items: []
+        };
+      }
+
       return savedState;
     }
 
@@ -75,6 +86,12 @@ export class BudgetStore {
         cycleStartDate: null,
         cycleEndDate: null,
         daysRemaining: 0
+      },
+      initialExpenses: {
+        fund: 0,
+        totalCommitted: 0,
+        totalPaid: 0,
+        items: []
       },
       expenses: [],
       ui: {
@@ -214,9 +231,10 @@ export class BudgetStore {
       expense.amount
     );
 
-    // Recalculate daily budget
+    // Recalculate daily budget (accounting for initial expenses fund)
+    const availableBalance = newBalance - this.state.initialExpenses.fund;
     const newDailyBudget = this.calculator.recalculateBudget(
-      newBalance,
+      availableBalance,
       this.state.budget.daysRemaining
     );
 
@@ -274,9 +292,10 @@ export class BudgetStore {
 
     // Update state if different
     if (daysRemaining !== this.state.budget.daysRemaining) {
-      // Also recalculate daily budget with new days remaining
+      // Also recalculate daily budget with new days remaining (accounting for initial expenses fund)
+      const availableBalance = this.state.budget.currentBalance - this.state.initialExpenses.fund;
       const newDailyBudget = this.calculator.recalculateBudget(
-        this.state.budget.currentBalance,
+        availableBalance,
         daysRemaining
       );
 
@@ -318,9 +337,10 @@ export class BudgetStore {
 
     const newSavingsFund = this.state.budget.savingsFund + amount;
 
-    // Recalculate daily budget
+    // Recalculate daily budget (accounting for initial expenses fund)
+    const availableBalance = newBalance - this.state.initialExpenses.fund;
     const newDailyBudget = this.calculator.recalculateBudget(
-      newBalance,
+      availableBalance,
       this.state.budget.daysRemaining
     );
 
@@ -357,9 +377,10 @@ export class BudgetStore {
     // Add expense amount back to balance
     const newBalance = this.state.budget.currentBalance + expense.amount;
 
-    // Recalculate daily budget
+    // Recalculate daily budget (accounting for initial expenses fund)
+    const availableBalance = newBalance - this.state.initialExpenses.fund;
     const newDailyBudget = this.calculator.recalculateBudget(
-      newBalance,
+      availableBalance,
       this.state.budget.daysRemaining
     );
 
@@ -383,6 +404,214 @@ export class BudgetStore {
     });
 
     return true;
+  }
+
+  /**
+   * Add an initial expense (reserved for known upcoming costs)
+   * @param {Object} expense - Initial expense object {description, amount, category, notes}
+   * @returns {boolean} True if successful
+   */
+  addInitialExpense(expense) {
+    // Validate expense
+    if (!expense || typeof expense !== 'object') {
+      console.error('addInitialExpense: Invalid expense object', expense);
+      return false;
+    }
+
+    if (!validateAmount(expense.amount) || expense.amount <= 0) {
+      console.error('addInitialExpense: Invalid expense amount', expense.amount);
+      return false;
+    }
+
+    // Check if enough balance
+    if (expense.amount > this.state.budget.currentBalance) {
+      console.error('addInitialExpense: Insufficient balance');
+      return false;
+    }
+
+    // Create initial expense with defaults
+    const newInitialExpense = {
+      id: Date.now().toString(),
+      description: expense.description || 'Initial Expense',
+      amount: expense.amount,
+      category: expense.category || null,
+      isPaid: false,
+      paidDate: null,
+      notes: expense.notes || '',
+      timestamp: Date.now()
+    };
+
+    // Add to items array
+    const updatedItems = [...this.state.initialExpenses.items, newInitialExpense];
+
+    // Update fund and totals
+    const newFund = this.state.initialExpenses.fund + expense.amount;
+    const newTotalCommitted = this.state.initialExpenses.totalCommitted + expense.amount;
+
+    // Deduct from current balance
+    const newBalance = this.calculator.subtractExpense(
+      this.state.budget.currentBalance,
+      expense.amount
+    );
+
+    // Recalculate daily budget (accounting for initial expenses fund)
+    const availableBalance = newBalance - newFund;
+    const newDailyBudget = this.calculator.calculateDailyBudget(
+      availableBalance,
+      this.state.budget.daysRemaining
+    );
+
+    // Update state
+    this.setState({
+      initialExpenses: {
+        ...this.state.initialExpenses,
+        fund: newFund,
+        totalCommitted: newTotalCommitted,
+        items: updatedItems
+      },
+      budget: {
+        ...this.state.budget,
+        currentBalance: newBalance,
+        dailyBudget: newDailyBudget
+      }
+    });
+
+    return true;
+  }
+
+  /**
+   * Remove an initial expense
+   * @param {string} expenseId - ID of expense to remove
+   * @returns {boolean} True if successful
+   */
+  removeInitialExpense(expenseId) {
+    const expense = this.state.initialExpenses.items.find(e => e.id === expenseId);
+
+    if (!expense) {
+      console.error('removeInitialExpense: Expense not found', expenseId);
+      return false;
+    }
+
+    // Can't remove expenses that are already paid
+    if (expense.isPaid) {
+      console.error('removeInitialExpense: Cannot remove paid expense');
+      return false;
+    }
+
+    // Remove from items array
+    const updatedItems = this.state.initialExpenses.items.filter(e => e.id !== expenseId);
+
+    // Update fund and totals
+    const newFund = this.state.initialExpenses.fund - expense.amount;
+    const newTotalCommitted = this.state.initialExpenses.totalCommitted - expense.amount;
+
+    // Add amount back to current balance
+    const newBalance = this.state.budget.currentBalance + expense.amount;
+
+    // Recalculate daily budget
+    const availableBalance = newBalance - newFund;
+    const newDailyBudget = this.calculator.calculateDailyBudget(
+      availableBalance,
+      this.state.budget.daysRemaining
+    );
+
+    // Update state
+    this.setState({
+      initialExpenses: {
+        ...this.state.initialExpenses,
+        fund: newFund,
+        totalCommitted: newTotalCommitted,
+        items: updatedItems
+      },
+      budget: {
+        ...this.state.budget,
+        currentBalance: newBalance,
+        dailyBudget: newDailyBudget
+      }
+    });
+
+    return true;
+  }
+
+  /**
+   * Mark an initial expense as paid
+   * @param {string} expenseId - ID of expense to mark as paid
+   * @returns {boolean} True if successful
+   */
+  markInitialExpenseAsPaid(expenseId) {
+    const expenseIndex = this.state.initialExpenses.items.findIndex(e => e.id === expenseId);
+
+    if (expenseIndex === -1) {
+      console.error('markInitialExpenseAsPaid: Expense not found', expenseId);
+      return false;
+    }
+
+    const expense = this.state.initialExpenses.items[expenseIndex];
+
+    // Check if already paid
+    if (expense.isPaid) {
+      console.error('markInitialExpenseAsPaid: Expense already paid');
+      return false;
+    }
+
+    // Update expense
+    const updatedItems = [...this.state.initialExpenses.items];
+    updatedItems[expenseIndex] = {
+      ...expense,
+      isPaid: true,
+      paidDate: getToday().toISOString()
+    };
+
+    // Decrease fund and increase totalPaid
+    const newFund = this.state.initialExpenses.fund - expense.amount;
+    const newTotalPaid = this.state.initialExpenses.totalPaid + expense.amount;
+
+    // Recalculate daily budget (more money available now)
+    const availableBalance = this.state.budget.currentBalance - newFund;
+    const newDailyBudget = this.calculator.calculateDailyBudget(
+      availableBalance,
+      this.state.budget.daysRemaining
+    );
+
+    // Update state
+    this.setState({
+      initialExpenses: {
+        ...this.state.initialExpenses,
+        fund: newFund,
+        totalPaid: newTotalPaid,
+        items: updatedItems
+      },
+      budget: {
+        ...this.state.budget,
+        dailyBudget: newDailyBudget
+      }
+    });
+
+    return true;
+  }
+
+  /**
+   * Get unpaid initial expenses
+   * @returns {Array} Array of unpaid initial expenses
+   */
+  getUnpaidInitialExpenses() {
+    return this.state.initialExpenses.items.filter(expense => !expense.isPaid);
+  }
+
+  /**
+   * Get paid initial expenses
+   * @returns {Array} Array of paid initial expenses
+   */
+  getPaidInitialExpenses() {
+    return this.state.initialExpenses.items.filter(expense => expense.isPaid);
+  }
+
+  /**
+   * Calculate total fund for unpaid initial expenses
+   * @returns {number} Total fund amount
+   */
+  calculateInitialExpensesFund() {
+    return this.getUnpaidInitialExpenses().reduce((sum, expense) => sum + expense.amount, 0);
   }
 
   /**
