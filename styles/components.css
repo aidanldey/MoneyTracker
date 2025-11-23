@@ -692,6 +692,97 @@
   border-color: var(--color-status-danger);
 }
 
+/* Radio button groups */
+.radio-group {
+  display: flex;
+  gap: var(--spacing-lg);
+  margin-top: var(--spacing-sm);
+}
+
+.radio-label {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  cursor: pointer;
+  padding: var(--spacing-md);
+  border: 2px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background-color: var(--color-background);
+  transition: all 0.2s ease;
+  flex: 1;
+  min-height: 44px;
+}
+
+.radio-label:hover {
+  border-color: var(--color-primary);
+  background-color: rgba(59, 130, 246, 0.05);
+}
+
+.radio-label input[type="radio"] {
+  width: 20px;
+  height: 20px;
+  margin: 0;
+  cursor: pointer;
+  accent-color: var(--color-primary);
+}
+
+.radio-label input[type="radio"]:checked + span {
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-primary);
+}
+
+.radio-label:has(input[type="radio"]:checked) {
+  border-color: var(--color-primary);
+  background-color: rgba(59, 130, 246, 0.1);
+}
+
+.radio-label span {
+  flex: 1;
+}
+
+/* Conditional fields */
+.conditional-fields {
+  margin-top: var(--spacing-lg);
+  padding-top: var(--spacing-lg);
+  border-top: 1px solid var(--color-border);
+  animation: slideDown 0.3s ease;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Date input styling */
+.form-group input[type="date"] {
+  cursor: pointer;
+}
+
+.form-group input[type="date"]::-webkit-calendar-picker-indicator {
+  cursor: pointer;
+  filter: opacity(0.6);
+  transition: filter 0.2s ease;
+}
+
+.form-group input[type="date"]:hover::-webkit-calendar-picker-indicator {
+  filter: opacity(1);
+}
+
+/* Help text for forms */
+.help-text {
+  font-size: var(--font-size-small);
+  color: var(--color-text);
+  opacity: 0.6;
+  margin-top: var(--spacing-sm);
+  line-height: 1.4;
+}
+
 /* ========================================
    END OF DAY MODAL
    ======================================== */

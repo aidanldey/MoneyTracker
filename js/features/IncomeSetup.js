@@ -9,7 +9,7 @@
  */
 
 import store from '../state/BudgetStore.js';
-import { getToday, addDays, formatDate } from '../utils/dateUtils.js';
+import { getToday, addDays, formatDate, getDaysUntil } from '../utils/dateUtils.js';
 import { parseMoney, validateAmount, formatMoney } from '../utils/moneyUtils.js';
 import initialExpensesForm from './InitialExpensesForm.js';
 
@@ -137,6 +137,10 @@ export class IncomeSetup {
     const state = store.getState();
     const existingAmount = isEditing ? state.income.amount : '';
     const existingDays = isEditing ? state.income.daysToLast : '';
+    const existingFrequency = isEditing ? state.income.frequency : 'one-time';
+    const existingNextPayday = isEditing && state.income.nextPayday ? formatDate(state.income.nextPayday, 'iso') : '';
+
+    const isRecurring = existingFrequency !== 'one-time';
 
     const title = isFirstTime
       ? "Let's Start by Setting Up Your Income"
@@ -167,16 +171,64 @@ export class IncomeSetup {
           </div>
 
           <div class="form-group">
-            <label for="income-days">Days to Last</label>
-            <input
-              type="number"
-              id="income-days"
-              name="days"
-              placeholder="14"
-              min="1"
-              max="365"
-              value="${existingDays}"
-              required>
+            <label>Income Type</label>
+            <div class="radio-group">
+              <label class="radio-label">
+                <input
+                  type="radio"
+                  name="income-type"
+                  value="one-time"
+                  ${!isRecurring ? 'checked' : ''}
+                  required>
+                <span>One-Time</span>
+              </label>
+              <label class="radio-label">
+                <input
+                  type="radio"
+                  name="income-type"
+                  value="recurring"
+                  ${isRecurring ? 'checked' : ''}
+                  required>
+                <span>Recurring</span>
+              </label>
+            </div>
+          </div>
+
+          <div id="one-time-fields" class="conditional-fields" ${!isRecurring ? '' : 'style="display:none;"'}>
+            <div class="form-group">
+              <label for="income-days">Days to Last</label>
+              <input
+                type="number"
+                id="income-days"
+                name="days"
+                placeholder="14"
+                min="1"
+                max="365"
+                value="${existingDays}">
+            </div>
+          </div>
+
+          <div id="recurring-fields" class="conditional-fields" ${isRecurring ? '' : 'style="display:none;"'}>
+            <div class="form-group">
+              <label for="income-frequency">Pay Frequency</label>
+              <select id="income-frequency" name="frequency">
+                <option value="weekly" ${existingFrequency === 'weekly' ? 'selected' : ''}>Weekly (every 7 days)</option>
+                <option value="bi-weekly" ${existingFrequency === 'bi-weekly' ? 'selected' : ''}>Bi-Weekly (every 14 days)</option>
+                <option value="semi-monthly" ${existingFrequency === 'semi-monthly' ? 'selected' : ''}>Semi-Monthly (twice a month)</option>
+                <option value="monthly" ${existingFrequency === 'monthly' ? 'selected' : ''}>Monthly</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label for="next-payday">Next Payday</label>
+              <input
+                type="date"
+                id="next-payday"
+                name="nextPayday"
+                value="${existingNextPayday}"
+                min="${formatDate(getToday(), 'iso')}">
+              <p class="help-text" id="payday-preview"></p>
+            </div>
           </div>
 
           <div class="modal-actions">
@@ -199,9 +251,49 @@ export class IncomeSetup {
     // Set up event listeners
     const form = document.getElementById('income-step1-form');
     const cancelBtn = document.getElementById('cancel-btn');
+    const incomeTypeRadios = document.querySelectorAll('input[name="income-type"]');
+    const frequencySelect = document.getElementById('income-frequency');
+    const nextPaydayInput = document.getElementById('next-payday');
 
     form.addEventListener('submit', this.handleStep1Submit);
     cancelBtn.addEventListener('click', this.handleCancel);
+
+    // Toggle fields based on income type
+    incomeTypeRadios.forEach(radio => {
+      radio.addEventListener('change', (e) => {
+        const oneTimeFields = document.getElementById('one-time-fields');
+        const recurringFields = document.getElementById('recurring-fields');
+        const daysInput = document.getElementById('income-days');
+        const frequencyInput = document.getElementById('income-frequency');
+        const nextPaydayInput = document.getElementById('next-payday');
+
+        if (e.target.value === 'one-time') {
+          oneTimeFields.style.display = 'block';
+          recurringFields.style.display = 'none';
+          daysInput.required = true;
+          frequencyInput.required = false;
+          nextPaydayInput.required = false;
+        } else {
+          oneTimeFields.style.display = 'none';
+          recurringFields.style.display = 'block';
+          daysInput.required = false;
+          frequencyInput.required = true;
+          nextPaydayInput.required = true;
+          this.updatePaydayPreview();
+        }
+      });
+    });
+
+    // Update payday preview when frequency or next payday changes
+    if (frequencySelect && nextPaydayInput) {
+      frequencySelect.addEventListener('change', () => this.updatePaydayPreview());
+      nextPaydayInput.addEventListener('change', () => this.updatePaydayPreview());
+    }
+
+    // Initial payday preview update if recurring
+    if (isRecurring) {
+      setTimeout(() => this.updatePaydayPreview(), 50);
+    }
 
     // Focus on first input
     setTimeout(() => {
@@ -421,30 +513,72 @@ export class IncomeSetup {
     e.preventDefault();
 
     const amountInput = document.getElementById('income-amount');
-    const daysInput = document.getElementById('income-days');
+    const incomeType = document.querySelector('input[name="income-type"]:checked').value;
 
     const amount = parseMoney(amountInput.value);
-    const days = parseInt(daysInput.value, 10);
 
-    // Validate
+    // Validate amount
     if (!validateAmount(amount) || amount <= 0) {
       alert('Please enter a valid income amount greater than $0.');
       amountInput.focus();
       return;
     }
 
-    if (isNaN(days) || days < 1 || days > 365) {
-      alert('Please enter a valid number of days (1-365).');
-      daysInput.focus();
-      return;
-    }
+    // Handle one-time or recurring based on selection
+    if (incomeType === 'one-time') {
+      const daysInput = document.getElementById('income-days');
+      const days = parseInt(daysInput.value, 10);
 
-    // Store income data temporarily
-    this.incomeData = {
-      amount,
-      days,
-      startDate: getToday()
-    };
+      if (isNaN(days) || days < 1 || days > 365) {
+        alert('Please enter a valid number of days (1-365).');
+        daysInput.focus();
+        return;
+      }
+
+      // Store one-time income data temporarily
+      this.incomeData = {
+        amount,
+        days,
+        startDate: getToday(),
+        frequency: 'one-time',
+        nextPayday: null
+      };
+    } else {
+      // Recurring income
+      const frequencyInput = document.getElementById('income-frequency');
+      const nextPaydayInput = document.getElementById('next-payday');
+
+      const frequency = frequencyInput.value;
+      const nextPayday = nextPaydayInput.value;
+
+      if (!nextPayday) {
+        alert('Please select your next payday date.');
+        nextPaydayInput.focus();
+        return;
+      }
+
+      // Validate next payday is in the future
+      const nextPaydayDate = new Date(nextPayday);
+      const today = getToday();
+      if (nextPaydayDate < today) {
+        alert('Next payday must be today or in the future.');
+        nextPaydayInput.focus();
+        return;
+      }
+
+      // Calculate days until next payday
+      const daysUntilPayday = getDaysUntil(nextPayday);
+      const days = daysUntilPayday > 0 ? daysUntilPayday : 1;
+
+      // Store recurring income data temporarily
+      this.incomeData = {
+        amount,
+        days,
+        startDate: getToday(),
+        frequency,
+        nextPayday: nextPaydayDate.toISOString()
+      };
+    }
 
     // Go to step 2
     this.currentStep = 2;
@@ -486,8 +620,13 @@ export class IncomeSetup {
    */
   handleStep3Submit() {
     try {
-      // Save income to BudgetStore
-      const incomeSuccess = store.setupIncome(this.incomeData.amount, this.incomeData.days);
+      // Save income to BudgetStore (with frequency and nextPayday for recurring)
+      const incomeSuccess = store.setupIncome(
+        this.incomeData.amount,
+        this.incomeData.days,
+        this.incomeData.frequency,
+        this.incomeData.nextPayday
+      );
 
       if (!incomeSuccess) {
         alert('Failed to save income. Please try again.');
@@ -514,6 +653,8 @@ export class IncomeSetup {
       console.log('Setup complete:', {
         income: formatMoney(this.incomeData.amount),
         days: this.incomeData.days,
+        frequency: this.incomeData.frequency,
+        nextPayday: this.incomeData.nextPayday ? formatDate(this.incomeData.nextPayday, 'long') : 'N/A',
         initialExpenses: this.initialExpenses.length
       });
 
@@ -601,6 +742,112 @@ export class IncomeSetup {
 
     // Re-render step 2
     this.renderStep2();
+  }
+
+  /**
+   * Update the payday preview text showing future paydays
+   * @private
+   */
+  updatePaydayPreview() {
+    const frequencyInput = document.getElementById('income-frequency');
+    const nextPaydayInput = document.getElementById('next-payday');
+    const previewText = document.getElementById('payday-preview');
+
+    if (!frequencyInput || !nextPaydayInput || !previewText) {
+      return;
+    }
+
+    const frequency = frequencyInput.value;
+    const nextPayday = nextPaydayInput.value;
+
+    if (!nextPayday) {
+      previewText.textContent = '';
+      return;
+    }
+
+    const nextPaydayDate = new Date(nextPayday);
+    const futurePaydays = this.calculateFuturePaydays(nextPaydayDate, frequency, 3);
+
+    if (futurePaydays.length === 0) {
+      previewText.textContent = '';
+      return;
+    }
+
+    const daysUntil = getDaysUntil(nextPayday);
+    const daysText = daysUntil === 0 ? 'today' : daysUntil === 1 ? 'tomorrow' : `in ${daysUntil} days`;
+
+    const futureText = futurePaydays.slice(1).map(date => formatDate(date, 'short')).join(', ');
+    previewText.textContent = `Next payday ${daysText}. Future paydays: ${futureText}`;
+  }
+
+  /**
+   * Calculate future payday dates based on frequency
+   * @private
+   * @param {Date} startDate - The first payday date
+   * @param {string} frequency - weekly, bi-weekly, semi-monthly, or monthly
+   * @param {number} count - Number of future paydays to calculate
+   * @returns {Array<Date>} Array of future payday dates
+   */
+  calculateFuturePaydays(startDate, frequency, count = 3) {
+    const paydays = [new Date(startDate)];
+
+    for (let i = 1; i < count; i++) {
+      const lastPayday = paydays[paydays.length - 1];
+      let nextPayday;
+
+      switch (frequency) {
+        case 'weekly':
+          nextPayday = addDays(lastPayday, 7);
+          break;
+
+        case 'bi-weekly':
+          nextPayday = addDays(lastPayday, 14);
+          break;
+
+        case 'semi-monthly':
+          // Semi-monthly: 1st and 15th typically, or 15 days apart
+          nextPayday = addDays(lastPayday, 15);
+          break;
+
+        case 'monthly':
+          // Add one month, keeping same day of month
+          nextPayday = new Date(lastPayday);
+          nextPayday.setMonth(nextPayday.getMonth() + 1);
+          // Handle edge case where day doesn't exist in next month (e.g., Jan 31 -> Feb 28)
+          if (nextPayday.getDate() !== lastPayday.getDate()) {
+            nextPayday.setDate(0); // Set to last day of previous month
+          }
+          break;
+
+        default:
+          nextPayday = addDays(lastPayday, 14);
+      }
+
+      paydays.push(nextPayday);
+    }
+
+    return paydays;
+  }
+
+  /**
+   * Calculate the number of days until next payday based on frequency
+   * @private
+   * @param {string} frequency - weekly, bi-weekly, semi-monthly, or monthly
+   * @returns {number} Number of days until next payday
+   */
+  getDaysForFrequency(frequency) {
+    switch (frequency) {
+      case 'weekly':
+        return 7;
+      case 'bi-weekly':
+        return 14;
+      case 'semi-monthly':
+        return 15;
+      case 'monthly':
+        return 30;
+      default:
+        return 14;
+    }
   }
 
   /**

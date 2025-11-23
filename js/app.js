@@ -62,6 +62,7 @@ class App {
 
   /**
    * Check for daily rollover and reset today's spent if needed
+   * Also checks for recurring income payday rollover
    * @private
    */
   checkDailyRollover() {
@@ -76,6 +77,15 @@ class App {
     // Check if we have a cycle start date
     if (!state.budget.cycleStartDate) {
       console.log('ℹ️ No cycle start date, skipping rollover check');
+      return;
+    }
+
+    // Check for recurring income payday rollover FIRST
+    const paydayOccurred = store.checkAndHandlePayday();
+    if (paydayOccurred) {
+      console.log('💰 Payday rollover completed');
+      // If payday occurred, the state was already updated, so we can skip the rest
+      dashboard.refresh();
       return;
     }
 

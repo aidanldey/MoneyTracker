@@ -8,7 +8,7 @@
 
 import { BudgetCalculator } from '../models/BudgetCalculator.js';
 import { getToday, getDaysUntil, formatDate, addDays } from '../utils/dateUtils.js';
-import { validateAmount } from '../utils/moneyUtils.js';
+import { validateAmount, formatMoney } from '../utils/moneyUtils.js';
 import { saveToStorage, loadFromStorage } from '../utils/storage.js';
 
 /**
@@ -74,7 +74,9 @@ export class BudgetStore {
         amount: 0,
         daysToLast: 0,
         startDate: null,
-        endDate: null
+        endDate: null,
+        frequency: 'one-time',
+        nextPayday: null
       },
       budget: {
         startingBalance: 0,
@@ -146,12 +148,14 @@ export class BudgetStore {
   }
 
   /**
-   * Set up one-time income and initialize budget cycle
+   * Set up income and initialize budget cycle
    * @param {number} amount - Income amount
    * @param {number} daysToLast - Number of days until next income
+   * @param {string} frequency - Income frequency: 'one-time', 'weekly', 'bi-weekly', 'semi-monthly', 'monthly'
+   * @param {string|Date} nextPayday - Next payday date (for recurring income)
    * @returns {boolean} True if setup was successful
    */
-  setupIncome(amount, daysToLast) {
+  setupIncome(amount, daysToLast, frequency = 'one-time', nextPayday = null) {
     // Validate inputs
     if (!validateAmount(amount)) {
       console.error('setupIncome: Invalid amount', amount);
@@ -176,7 +180,9 @@ export class BudgetStore {
         amount,
         daysToLast,
         startDate: startDate.toISOString(),
-        endDate: endDate.toISOString()
+        endDate: endDate.toISOString(),
+        frequency: frequency || 'one-time',
+        nextPayday: nextPayday ? (typeof nextPayday === 'string' ? nextPayday : nextPayday.toISOString()) : null
       },
       budget: {
         startingBalance: amount,
@@ -676,6 +682,175 @@ export class BudgetStore {
         ...uiUpdates
       }
     });
+  }
+
+  /**
+   * Check if today is payday and handle auto-rollover for recurring income
+   * Should be called on app initialization and periodically
+   * @returns {boolean} True if rollover occurred
+   */
+  checkAndHandlePayday() {
+    // Only process for recurring income
+    if (this.state.income.frequency === 'one-time' || !this.state.income.nextPayday) {
+      return false;
+    }
+
+    const today = getToday();
+    const nextPayday = new Date(this.state.income.nextPayday);
+    nextPayday.setHours(0, 0, 0, 0);
+
+    // Check if today is payday or later
+    if (today.getTime() < nextPayday.getTime()) {
+      return false;
+    }
+
+    console.log('Payday detected! Rolling over to next cycle...');
+
+    // Perform rollover
+    return this.rolloverToNextCycle();
+  }
+
+  /**
+   * Rollover to the next pay cycle for recurring income
+   * @private
+   * @returns {boolean} True if successful
+   */
+  rolloverToNextCycle() {
+    const frequency = this.state.income.frequency;
+    const amount = this.state.income.amount;
+    const currentPayday = new Date(this.state.income.nextPayday);
+
+    // Calculate next payday based on frequency
+    let nextPayday;
+    let daysUntilNext;
+
+    switch (frequency) {
+      case 'weekly':
+        nextPayday = addDays(currentPayday, 7);
+        daysUntilNext = 7;
+        break;
+
+      case 'bi-weekly':
+        nextPayday = addDays(currentPayday, 14);
+        daysUntilNext = 14;
+        break;
+
+      case 'semi-monthly':
+        nextPayday = addDays(currentPayday, 15);
+        daysUntilNext = 15;
+        break;
+
+      case 'monthly':
+        nextPayday = new Date(currentPayday);
+        nextPayday.setMonth(nextPayday.getMonth() + 1);
+        // Handle edge case where day doesn't exist in next month
+        if (nextPayday.getDate() !== currentPayday.getDate()) {
+          nextPayday.setDate(0);
+        }
+        daysUntilNext = getDaysUntil(nextPayday);
+        break;
+
+      default:
+        console.error('rolloverToNextCycle: Invalid frequency', frequency);
+        return false;
+    }
+
+    const today = getToday();
+    const endDate = addDays(today, daysUntilNext);
+
+    // Reset balance to income amount (fresh paycheck)
+    const newBalance = amount;
+
+    // Recalculate daily budget (accounting for initial expenses fund)
+    const availableBalance = newBalance - this.state.initialExpenses.fund;
+    const dailyBudget = this.calculator.calculateDailyBudget(availableBalance, daysUntilNext);
+
+    // Archive current cycle data (for future Phase 3 - history tracking)
+    // TODO: In Phase 3, save current cycle to history before resetting
+
+    // Update state for new cycle
+    this.setState({
+      income: {
+        ...this.state.income,
+        daysToLast: daysUntilNext,
+        startDate: today.toISOString(),
+        endDate: endDate.toISOString(),
+        nextPayday: nextPayday.toISOString()
+      },
+      budget: {
+        ...this.state.budget,
+        startingBalance: amount,
+        currentBalance: newBalance,
+        dailyBudget,
+        todaySpent: 0,
+        cycleStartDate: today.toISOString(),
+        cycleEndDate: endDate.toISOString(),
+        daysRemaining: daysUntilNext
+      },
+      // Note: Keep expenses array for history
+      // Note: Keep initial expenses (they carry over to next cycle)
+      // TODO Phase 2.2: Apply recurring expenses automatically
+    });
+
+    console.log('Rollover complete!', {
+      newBalance: formatMoney(newBalance),
+      nextPayday: formatDate(nextPayday, 'long'),
+      daysUntilNext
+    });
+
+    // Emit event for UI updates
+    this.emitPaydayEvent({
+      amount,
+      nextPayday: nextPayday.toISOString(),
+      daysUntilNext
+    });
+
+    return true;
+  }
+
+  /**
+   * Emit payday event
+   * @private
+   * @param {Object} detail - Event detail data
+   */
+  emitPaydayEvent(detail) {
+    const event = new CustomEvent('payday-rollover', {
+      detail,
+      bubbles: true
+    });
+    document.dispatchEvent(event);
+  }
+
+  /**
+   * Calculate the next payday date based on current payday and frequency
+   * @param {Date|string} currentPayday - Current payday date
+   * @param {string} frequency - Income frequency
+   * @returns {Date} Next payday date
+   */
+  calculateNextPayday(currentPayday, frequency) {
+    const current = new Date(currentPayday);
+
+    switch (frequency) {
+      case 'weekly':
+        return addDays(current, 7);
+
+      case 'bi-weekly':
+        return addDays(current, 14);
+
+      case 'semi-monthly':
+        return addDays(current, 15);
+
+      case 'monthly':
+        const next = new Date(current);
+        next.setMonth(next.getMonth() + 1);
+        if (next.getDate() !== current.getDate()) {
+          next.setDate(0);
+        }
+        return next;
+
+      default:
+        return addDays(current, 14);
+    }
   }
 }
 
