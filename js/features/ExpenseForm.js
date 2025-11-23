@@ -9,6 +9,7 @@
 import store from '../state/BudgetStore.js';
 import { getToday, isToday } from '../utils/dateUtils.js';
 import { parseMoney, validateAmount, formatMoney } from '../utils/moneyUtils.js';
+import initialExpensesForm from './InitialExpensesForm.js';
 
 /**
  * ExpenseForm class manages the add expense modal
@@ -313,6 +314,27 @@ export class ExpenseForm {
   }
 
   /**
+   * Check if description matches bill keywords
+   * @private
+   * @param {string} description - Expense description
+   * @returns {boolean} True if matches keywords
+   */
+  matchesBillKeywords(description) {
+    const keywords = [
+      'rent', 'mortgage',
+      'insurance', 'premium',
+      'bill', 'payment',
+      'subscription', 'subscribe',
+      'loan', 'credit',
+      'utilities', 'utility',
+      'internet', 'cable', 'phone'
+    ];
+
+    const lowerDesc = description.toLowerCase();
+    return keywords.some(keyword => lowerDesc.includes(keyword));
+  }
+
+  /**
    * Handle form submission
    * @private
    * @param {Event} e - Form submit event
@@ -337,6 +359,35 @@ export class ExpenseForm {
     const amount = validation.amount;
     const description = this.descriptionInput.value.trim() || 'Expense';
     const category = this.categorySelect.value;
+
+    // Check if this looks like a recurring bill
+    const state = store.getState();
+    const hasIncome = state.income.amount > 0;
+    const hasInitialExpenses = state.initialExpenses.items.length > 0 || state.initialExpenses.fund > 0;
+
+    if (hasIncome && this.matchesBillKeywords(description)) {
+      const suggestion = confirm(
+        `This looks like it might be a bill or recurring expense.\n\n` +
+        `Would you like to add it as an Initial Expense instead?\n\n` +
+        `Initial Expenses are reserved from your daily budget to ensure ` +
+        `you have money when bills are due.\n\n` +
+        `Click OK to add as Initial Expense, or Cancel to add as regular expense.`
+      );
+
+      if (suggestion) {
+        // Close this modal
+        this.hideModal();
+
+        // Open Initial Expenses Form
+        if (initialExpensesForm) {
+          initialExpensesForm.showModal();
+
+          // Pre-fill if possible (not supported in current implementation)
+          // Future enhancement: pass data to InitialExpensesForm
+        }
+        return;
+      }
+    }
 
     // Create expense object
     const expense = {

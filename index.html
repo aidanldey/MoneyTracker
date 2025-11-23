@@ -88,7 +88,16 @@
             class="summary-card summary-card-wide"
             id="initial-expenses-card"
             style="display: none;">
-            <h2 class="card-label">Committed Funds</h2>
+            <div class="card-header-with-info">
+              <h2 class="card-label">Committed Funds</h2>
+              <button
+                class="info-icon"
+                id="initial-expenses-info-btn"
+                aria-label="What are initial expenses?"
+                title="Learn more about initial expenses">
+                ⓘ
+              </button>
+            </div>
             <p class="card-value money-value" id="initial-expenses-fund">
               $0.00
             </p>
@@ -119,7 +128,36 @@
           aria-label="Manage income settings">
           Manage Income
         </button>
+        <button
+          class="btn btn-secondary"
+          id="quick-initial-expenses-btn"
+          aria-label="Manage initial expenses and obligations">
+          Manage Obligations
+        </button>
       </section>
+
+      <!-- FIRST-TIME USER HINT -->
+      <aside
+        class="hint-banner"
+        id="initial-expenses-hint"
+        style="display: none;"
+        role="status"
+        aria-live="polite">
+        <div class="hint-content">
+          <span class="hint-icon">💡</span>
+          <div class="hint-text">
+            <strong>Tip:</strong> Add your bills and obligations to get a more accurate daily budget
+          </div>
+        </div>
+        <div class="hint-actions">
+          <button class="btn btn-small btn-primary" id="hint-add-expenses-btn">
+            Add Initial Expenses
+          </button>
+          <button class="hint-dismiss" id="hint-dismiss-btn" aria-label="Dismiss hint">
+            ×
+          </button>
+        </div>
+      </aside>
 
       <!-- TODAY'S EXPENSES -->
       <section class="today-expenses" aria-labelledby="today-expenses-heading">

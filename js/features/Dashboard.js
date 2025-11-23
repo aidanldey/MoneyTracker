@@ -40,11 +40,20 @@ export class Dashboard {
     this.initialExpensesFundEl = document.getElementById('initial-expenses-fund');
     this.unpaidCountEl = document.getElementById('unpaid-count');
     this.manageInitialExpensesBtn = document.getElementById('manage-initial-expenses-btn');
+    this.quickInitialExpensesBtn = document.getElementById('quick-initial-expenses-btn');
+    this.initialExpensesInfoBtn = document.getElementById('initial-expenses-info-btn');
+
+    // Hint banner elements
+    this.hintBanner = document.getElementById('initial-expenses-hint');
+    this.hintAddBtn = document.getElementById('hint-add-expenses-btn');
+    this.hintDismissBtn = document.getElementById('hint-dismiss-btn');
 
     // Bind methods
     this.handleStateChange = this.handleStateChange.bind(this);
     this.handleToggleExpenses = this.handleToggleExpenses.bind(this);
     this.handleManageInitialExpenses = this.handleManageInitialExpenses.bind(this);
+    this.handleInfoClick = this.handleInfoClick.bind(this);
+    this.handleHintDismiss = this.handleHintDismiss.bind(this);
 
     // Track collapse state
     this.expensesExpanded = true;
@@ -78,9 +87,27 @@ export class Dashboard {
       this.toggleExpensesBtn.addEventListener('click', this.handleToggleExpenses);
     }
 
-    // Manage initial expenses button
+    // Manage initial expenses buttons
     if (this.manageInitialExpensesBtn) {
       this.manageInitialExpensesBtn.addEventListener('click', this.handleManageInitialExpenses);
+    }
+
+    if (this.quickInitialExpensesBtn) {
+      this.quickInitialExpensesBtn.addEventListener('click', this.handleManageInitialExpenses);
+    }
+
+    // Info button
+    if (this.initialExpensesInfoBtn) {
+      this.initialExpensesInfoBtn.addEventListener('click', this.handleInfoClick);
+    }
+
+    // Hint banner buttons
+    if (this.hintAddBtn) {
+      this.hintAddBtn.addEventListener('click', this.handleManageInitialExpenses);
+    }
+
+    if (this.hintDismissBtn) {
+      this.hintDismissBtn.addEventListener('click', this.handleHintDismiss);
     }
 
     // Listen for income-saved event
@@ -136,6 +163,7 @@ export class Dashboard {
     this.updateHeroSection(remainingToday, status);
     this.updateSummaryCards(state.budget);
     this.updateInitialExpensesCard(state.initialExpenses);
+    this.updateHintBanner(state.initialExpenses);
     this.updateTodayExpenses(state.expenses);
   }
 
@@ -277,6 +305,33 @@ export class Dashboard {
   }
 
   /**
+   * Update hint banner visibility
+   * @param {Object} initialExpenses - Initial expenses state
+   */
+  updateHintBanner(initialExpenses) {
+    // Skip if hint banner not found
+    if (!this.hintBanner) return;
+
+    // Check if hint was dismissed
+    const dismissed = localStorage.getItem('initialExpensesHintDismissed') === 'true';
+
+    // Show hint if:
+    // 1. User has income set up
+    // 2. User has no initial expenses
+    // 3. Hint hasn't been dismissed
+    const state = store.getState();
+    const shouldShow = state.income.amount > 0 &&
+                       initialExpenses.items.length === 0 &&
+                       !dismissed;
+
+    if (shouldShow) {
+      this.hintBanner.style.display = 'flex';
+    } else {
+      this.hintBanner.style.display = 'none';
+    }
+  }
+
+  /**
    * Update today's expenses section
    * @param {Array} allExpenses - All expenses from state
    */
@@ -384,6 +439,43 @@ export class Dashboard {
     console.log('Opening Initial Expenses List...');
     if (initialExpensesList) {
       initialExpensesList.showList();
+    }
+  }
+
+  /**
+   * Handle info icon click
+   * @private
+   */
+  handleInfoClick() {
+    const message = `Initial Expenses (Committed Funds)
+
+These are financial obligations you know you need to pay this cycle, such as:
+• Rent or mortgage
+• Utility bills
+• Insurance premiums
+• Loan payments
+• Subscriptions
+
+These funds are reserved from your daily budget to ensure you have money when bills are due. Your daily budget is calculated as:
+
+Daily Budget = (Current Balance - Committed Funds) ÷ Days Remaining
+
+This helps you avoid overspending and ensures you can cover your obligations.`;
+
+    alert(message);
+  }
+
+  /**
+   * Handle hint dismiss button click
+   * @private
+   */
+  handleHintDismiss() {
+    // Store dismissed state
+    localStorage.setItem('initialExpensesHintDismissed', 'true');
+
+    // Hide hint banner
+    if (this.hintBanner) {
+      this.hintBanner.style.display = 'none';
     }
   }
 

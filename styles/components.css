@@ -216,6 +216,126 @@
   opacity: 0.6;
 }
 
+/* Card Header with Info Icon */
+.card-header-with-info {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--spacing-sm);
+}
+
+.card-header-with-info .card-label {
+  margin: 0;
+}
+
+/* Info Icon Button */
+.info-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  background: none;
+  border: none;
+  color: var(--color-text);
+  opacity: 0.5;
+  cursor: pointer;
+  font-size: 1rem;
+  border-radius: 50%;
+  transition: all 0.2s ease;
+  padding: 0;
+}
+
+.info-icon:hover {
+  opacity: 1;
+  background-color: rgba(0, 0, 0, 0.05);
+}
+
+.info-icon:active {
+  transform: scale(0.95);
+}
+
+/* Hint Banner */
+.hint-banner {
+  background-color: rgba(59, 130, 246, 0.1);
+  border: 1px solid var(--color-primary);
+  border-radius: var(--radius-md);
+  padding: var(--spacing-lg);
+  margin: var(--spacing-xl) 0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--spacing-lg);
+  animation: slideDown 0.3s ease;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.hint-content {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-md);
+  flex: 1;
+}
+
+.hint-icon {
+  font-size: 1.5rem;
+  line-height: 1;
+}
+
+.hint-text {
+  font-size: var(--font-size-small);
+  color: var(--color-text);
+  line-height: 1.4;
+}
+
+.hint-text strong {
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-primary);
+}
+
+.hint-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-md);
+}
+
+.hint-dismiss {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  background: none;
+  border: none;
+  color: var(--color-text);
+  opacity: 0.5;
+  cursor: pointer;
+  font-size: 1.5rem;
+  border-radius: var(--radius-sm);
+  transition: all 0.2s ease;
+  padding: 0;
+  line-height: 1;
+}
+
+.hint-dismiss:hover {
+  opacity: 1;
+  background-color: rgba(0, 0, 0, 0.05);
+}
+
+.hint-dismiss:active {
+  transform: scale(0.95);
+}
+
 /* ========================================
    BUTTONS
    ======================================== */
@@ -1265,6 +1385,19 @@
 /* ========================================
    RESPONSIVE BREAKPOINTS
    ======================================== */
+
+/* Mobile: < 640px */
+@media (max-width: 639px) {
+  .hint-banner {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .hint-actions {
+    width: 100%;
+    justify-content: space-between;
+  }
+}
 
 /* Tablet: 640px+ */
 @media (min-width: 640px) {
