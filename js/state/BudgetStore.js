@@ -10,6 +10,7 @@ import { BudgetCalculator } from '../models/BudgetCalculator.js';
 import { getToday, getDaysUntil, formatDate, addDays } from '../utils/dateUtils.js';
 import { validateAmount, formatMoney } from '../utils/moneyUtils.js';
 import { saveToStorage, loadFromStorage } from '../utils/storage.js';
+import RecurringExpense from '../models/RecurringExpense.js';
 
 /**
  * BudgetStore class - Centralized state management with event emission
@@ -56,6 +57,16 @@ export class BudgetStore {
         };
       }
 
+      // Backward compatibility: Add recurringExpenses if missing
+      if (!savedState.recurringExpenses) {
+        savedState.recurringExpenses = [];
+      }
+
+      // Backward compatibility: Add recurringExpenseDeduction if missing
+      if (savedState.budget && typeof savedState.budget.recurringExpenseDeduction === 'undefined') {
+        savedState.budget.recurringExpenseDeduction = 0;
+      }
+
       return savedState;
     }
 
@@ -87,7 +98,8 @@ export class BudgetStore {
         savingsFund: 0,
         cycleStartDate: null,
         cycleEndDate: null,
-        daysRemaining: 0
+        daysRemaining: 0,
+        recurringExpenseDeduction: 0
       },
       initialExpenses: {
         fund: 0,
@@ -95,6 +107,7 @@ export class BudgetStore {
         totalPaid: 0,
         items: []
       },
+      recurringExpenses: [],
       expenses: [],
       ui: {
         currentView: 'dashboard',
@@ -197,6 +210,9 @@ export class BudgetStore {
       },
       expenses: []
     });
+
+    // Apply recurring expenses to adjust daily budget
+    this.applyRecurringExpenses();
 
     return true;
   }
@@ -621,6 +637,163 @@ export class BudgetStore {
   }
 
   /**
+   * Add a recurring expense
+   * @param {Object} recurringExpense - Recurring expense object
+   * @returns {boolean} True if successful
+   */
+  addRecurringExpense(recurringExpense) {
+    // Validate with RecurringExpense model
+    const validation = RecurringExpense.validate(recurringExpense);
+    if (!validation.valid) {
+      console.error('addRecurringExpense: Validation failed', validation.error);
+      return false;
+    }
+
+    // Create recurring expense with ID and timestamp
+    const newRecurringExpense = {
+      id: Date.now().toString(),
+      description: recurringExpense.description || 'Recurring Expense',
+      amount: recurringExpense.amount,
+      category: recurringExpense.category || 'other',
+      frequency: recurringExpense.frequency,
+      startDate: recurringExpense.startDate,
+      endDate: recurringExpense.endDate || null,
+      isRecurring: true,
+      timestamp: Date.now()
+    };
+
+    // Add to array
+    const updatedRecurringExpenses = [...this.state.recurringExpenses, newRecurringExpense];
+
+    // Update state
+    this.setState({
+      recurringExpenses: updatedRecurringExpenses
+    });
+
+    // Recalculate budget with new recurring expenses
+    this.applyRecurringExpenses();
+
+    console.log('Recurring expense added:', {
+      description: newRecurringExpense.description,
+      amount: formatMoney(newRecurringExpense.amount),
+      frequency: newRecurringExpense.frequency
+    });
+
+    return true;
+  }
+
+  /**
+   * Remove a recurring expense by ID
+   * @param {string} expenseId - ID of recurring expense to remove
+   * @returns {boolean} True if successful
+   */
+  removeRecurringExpense(expenseId) {
+    const expense = this.state.recurringExpenses.find(e => e.id === expenseId);
+
+    if (!expense) {
+      console.error('removeRecurringExpense: Expense not found', expenseId);
+      return false;
+    }
+
+    // Remove from array
+    const updatedRecurringExpenses = this.state.recurringExpenses.filter(e => e.id !== expenseId);
+
+    // Update state
+    this.setState({
+      recurringExpenses: updatedRecurringExpenses
+    });
+
+    // Recalculate budget without this expense
+    this.applyRecurringExpenses();
+
+    console.log('Recurring expense removed:', expense.description);
+
+    return true;
+  }
+
+  /**
+   * Get recurring expenses active in the current cycle
+   * @returns {Array} Array of active recurring expenses
+   */
+  getActiveRecurringExpenses() {
+    const cycleStart = this.state.budget.cycleStartDate;
+    const cycleEnd = this.state.budget.cycleEndDate;
+
+    if (!cycleStart || !cycleEnd) {
+      return [];
+    }
+
+    return this.state.recurringExpenses.filter(expense => {
+      const startDate = new Date(expense.startDate);
+      const endDate = expense.endDate ? new Date(expense.endDate) : null;
+      const cycleStartDate = new Date(cycleStart);
+      const cycleEndDate = new Date(cycleEnd);
+
+      // Check if expense overlaps with current cycle
+      const startsBeforeCycleEnds = startDate <= cycleEndDate;
+      const endsAfterCycleStarts = !endDate || endDate >= cycleStartDate;
+
+      return startsBeforeCycleEnds && endsAfterCycleStarts;
+    });
+  }
+
+  /**
+   * Apply recurring expenses to the current budget cycle
+   * This is THE KEY METHOD that makes recurring expenses work
+   * Calculates total deduction and adjusts daily budget accordingly
+   * Called on: income setup, payday rollover, and when recurring expenses change
+   * @returns {number} Total recurring expense deduction for this cycle
+   */
+  applyRecurringExpenses() {
+    const cycleStart = this.state.budget.cycleStartDate;
+    const cycleEnd = this.state.budget.cycleEndDate;
+    const daysRemaining = this.state.budget.daysRemaining;
+
+    // If no cycle set up, can't apply recurring expenses
+    if (!cycleStart || !cycleEnd || daysRemaining <= 0) {
+      return 0;
+    }
+
+    // Get active recurring expenses for this cycle
+    const activeExpenses = this.getActiveRecurringExpenses();
+
+    // Calculate total deduction using RecurringExpense model
+    const totalDeduction = RecurringExpense.calculateTotalDeduction(
+      activeExpenses,
+      cycleStart,
+      cycleEnd
+    );
+
+    // Calculate available balance after initial expenses AND recurring expenses
+    const afterInitialExpenses = this.state.budget.currentBalance - this.state.initialExpenses.fund;
+    const availableBalance = afterInitialExpenses - totalDeduction;
+
+    // Recalculate daily budget with reduced balance
+    const newDailyBudget = this.calculator.calculateDailyBudget(
+      availableBalance,
+      daysRemaining
+    );
+
+    // Update state with new daily budget and deduction amount
+    this.setState({
+      budget: {
+        ...this.state.budget,
+        dailyBudget: newDailyBudget,
+        recurringExpenseDeduction: totalDeduction
+      }
+    });
+
+    console.log('Applied recurring expenses:', {
+      activeExpenses: activeExpenses.length,
+      totalDeduction: formatMoney(totalDeduction),
+      availableBalance: formatMoney(availableBalance),
+      newDailyBudget: formatMoney(newDailyBudget)
+    });
+
+    return totalDeduction;
+  }
+
+  /**
    * Save current state to localStorage
    * @returns {boolean} True if save was successful
    */
@@ -789,8 +962,11 @@ export class BudgetStore {
       },
       // Note: Keep expenses array for history
       // Note: Keep initial expenses (they carry over to next cycle)
-      // TODO Phase 2.2: Apply recurring expenses automatically
+      // Note: Keep recurring expenses (they carry over to next cycle)
     });
+
+    // Apply recurring expenses for new cycle
+    this.applyRecurringExpenses();
 
     console.log('Rollover complete!', {
       newBalance: formatMoney(newBalance),
