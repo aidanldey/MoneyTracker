@@ -322,6 +322,51 @@
               </select>
             </div>
 
+            <div class="form-group">
+              <label class="checkbox-label">
+                <input
+                  type="checkbox"
+                  id="expense-is-recurring"
+                  name="isRecurring">
+                <span>This is a recurring expense</span>
+              </label>
+            </div>
+
+            <div id="recurring-expense-fields" class="conditional-fields" style="display:none;">
+              <div class="form-group">
+                <label for="expense-frequency">Frequency</label>
+                <select id="expense-frequency" name="frequency">
+                  <option value="daily">Daily</option>
+                  <option value="weekly">Weekly</option>
+                  <option value="bi-weekly">Bi-Weekly</option>
+                  <option value="monthly" selected>Monthly</option>
+                  <option value="yearly">Yearly</option>
+                </select>
+              </div>
+
+              <div class="form-group">
+                <label for="expense-start-date">Start Date</label>
+                <input
+                  type="date"
+                  id="expense-start-date"
+                  name="startDate">
+                <p class="help-text">When does this expense start?</p>
+              </div>
+
+              <div class="form-group">
+                <label for="expense-end-date">End Date (Optional)</label>
+                <input
+                  type="date"
+                  id="expense-end-date"
+                  name="endDate">
+                <p class="help-text">Leave blank if ongoing</p>
+              </div>
+
+              <div class="recurring-preview" style="display:none;">
+                <p class="help-text" id="recurring-preview-text"></p>
+              </div>
+            </div>
+
             <div class="modal-actions">
               <button
                 type="button"

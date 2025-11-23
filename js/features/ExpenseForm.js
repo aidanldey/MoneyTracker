@@ -7,8 +7,9 @@
  */
 
 import store from '../state/BudgetStore.js';
-import { getToday, isToday } from '../utils/dateUtils.js';
+import { getToday, isToday, formatDate } from '../utils/dateUtils.js';
 import { parseMoney, validateAmount, formatMoney } from '../utils/moneyUtils.js';
+import RecurringExpense from '../models/RecurringExpense.js';
 import initialExpensesForm from './InitialExpensesForm.js';
 
 /**
@@ -29,6 +30,15 @@ export class ExpenseForm {
     this.overlay = this.modal.querySelector('.modal-overlay');
     this.submitButton = this.form.querySelector('button[type="submit"]');
 
+    // Recurring expense elements
+    this.isRecurringCheckbox = document.getElementById('expense-is-recurring');
+    this.recurringFields = document.getElementById('recurring-expense-fields');
+    this.frequencySelect = document.getElementById('expense-frequency');
+    this.startDateInput = document.getElementById('expense-start-date');
+    this.endDateInput = document.getElementById('expense-end-date');
+    this.recurringPreviewDiv = this.modal.querySelector('.recurring-preview');
+    this.recurringPreviewText = document.getElementById('recurring-preview-text');
+
     // Create preview element (will be added to modal)
     this.createPreviewElement();
 
@@ -36,6 +46,8 @@ export class ExpenseForm {
     this.handleSubmit = this.handleSubmit.bind(this);
     this.handleCancel = this.handleCancel.bind(this);
     this.handleAmountInput = this.handleAmountInput.bind(this);
+    this.handleRecurringToggle = this.handleRecurringToggle.bind(this);
+    this.handleRecurringFieldChange = this.handleRecurringFieldChange.bind(this);
 
     // Initialize event listeners
     this.initEventListeners();
@@ -96,6 +108,22 @@ export class ExpenseForm {
     // Amount input for live validation and preview
     this.amountInput.addEventListener('input', this.handleAmountInput);
 
+    // Recurring expense checkbox
+    if (this.isRecurringCheckbox) {
+      this.isRecurringCheckbox.addEventListener('change', this.handleRecurringToggle);
+    }
+
+    // Recurring expense field changes
+    if (this.frequencySelect) {
+      this.frequencySelect.addEventListener('change', this.handleRecurringFieldChange);
+    }
+    if (this.startDateInput) {
+      this.startDateInput.addEventListener('change', this.handleRecurringFieldChange);
+    }
+    if (this.endDateInput) {
+      this.endDateInput.addEventListener('change', this.handleRecurringFieldChange);
+    }
+
     // Listen for "Add Expense" button clicks
     document.addEventListener('click', (e) => {
       if (e.target.matches('[data-action="add-expense"]')) {
@@ -119,6 +147,14 @@ export class ExpenseForm {
     this.form.reset();
     this.hidePreview();
     this.clearErrors();
+
+    // Reset recurring fields
+    if (this.recurringFields) {
+      this.recurringFields.style.display = 'none';
+    }
+    if (this.recurringPreviewDiv) {
+      this.recurringPreviewDiv.style.display = 'none';
+    }
 
     // Show modal
     this.modal.removeAttribute('hidden');
@@ -359,37 +395,73 @@ export class ExpenseForm {
     const amount = validation.amount;
     const description = this.descriptionInput.value.trim() || 'Expense';
     const category = this.categorySelect.value;
+    const isRecurring = this.isRecurringCheckbox.checked;
 
-    // Check if this looks like a recurring bill
+    // Handle recurring expense
+    if (isRecurring) {
+      const frequency = this.frequencySelect.value;
+      const startDate = this.startDateInput.value;
+      const endDate = this.endDateInput.value || null;
+
+      // Validate recurring expense fields
+      if (!startDate) {
+        this.showError('Please select a start date for the recurring expense.');
+        return;
+      }
+
+      // Create recurring expense object
+      const recurringExpense = {
+        amount,
+        description,
+        category,
+        frequency,
+        startDate,
+        endDate,
+        isRecurring: true
+      };
+
+      // Validate with RecurringExpense model
+      const validationResult = RecurringExpense.validate(recurringExpense);
+      if (!validationResult.valid) {
+        this.showError(validationResult.error);
+        return;
+      }
+
+      // Add recurring expense
+      const success = this.addRecurringExpense(recurringExpense);
+
+      if (success) {
+        this.hideModal();
+
+        // Emit success event
+        this.emitEvent('recurring-expense-added', recurringExpense);
+      } else {
+        this.showError('Failed to add recurring expense. Please try again.');
+      }
+      return;
+    }
+
+    // Check if this looks like a recurring bill (for one-time expenses)
     const state = store.getState();
     const hasIncome = state.income.amount > 0;
-    const hasInitialExpenses = state.initialExpenses.items.length > 0 || state.initialExpenses.fund > 0;
 
     if (hasIncome && this.matchesBillKeywords(description)) {
       const suggestion = confirm(
         `This looks like it might be a bill or recurring expense.\n\n` +
-        `Would you like to add it as an Initial Expense instead?\n\n` +
-        `Initial Expenses are reserved from your daily budget to ensure ` +
-        `you have money when bills are due.\n\n` +
-        `Click OK to add as Initial Expense, or Cancel to add as regular expense.`
+        `Would you like to add it as a Recurring Expense instead?\n\n` +
+        `Recurring expenses are automatically deducted at the start of each pay cycle.\n\n` +
+        `Click OK to make it recurring, or Cancel to add as one-time expense.`
       );
 
       if (suggestion) {
-        // Close this modal
-        this.hideModal();
-
-        // Open Initial Expenses Form
-        if (initialExpensesForm) {
-          initialExpensesForm.showModal();
-
-          // Pre-fill if possible (not supported in current implementation)
-          // Future enhancement: pass data to InitialExpensesForm
-        }
+        // Check the recurring checkbox and return (let user configure)
+        this.isRecurringCheckbox.checked = true;
+        this.handleRecurringToggle();
         return;
       }
     }
 
-    // Create expense object
+    // Create one-time expense object
     const expense = {
       amount,
       description,
@@ -436,6 +508,32 @@ export class ExpenseForm {
   }
 
   /**
+   * Add recurring expense to BudgetStore
+   * @param {Object} recurringExpense - Recurring expense object
+   * @returns {boolean} Success status
+   */
+  addRecurringExpense(recurringExpense) {
+    try {
+      // Use BudgetStore's addRecurringExpense method
+      const success = store.addRecurringExpense(recurringExpense);
+
+      if (success) {
+        console.log('Recurring expense added successfully:', {
+          amount: formatMoney(recurringExpense.amount),
+          description: recurringExpense.description,
+          frequency: recurringExpense.frequency,
+          startDate: recurringExpense.startDate
+        });
+      }
+
+      return success;
+    } catch (error) {
+      console.error('Error adding recurring expense:', error);
+      return false;
+    }
+  }
+
+  /**
    * Handle cancel/close action
    * @private
    * @param {Event} e - Click event
@@ -443,6 +541,81 @@ export class ExpenseForm {
   handleCancel(e) {
     e.preventDefault();
     this.hideModal();
+  }
+
+  /**
+   * Handle recurring expense checkbox toggle
+   * @private
+   */
+  handleRecurringToggle() {
+    if (this.isRecurringCheckbox.checked) {
+      this.recurringFields.style.display = 'block';
+      // Set default start date to today
+      this.startDateInput.value = formatDate(getToday(), 'iso');
+      this.startDateInput.required = true;
+      this.frequencySelect.required = true;
+      this.updateRecurringPreview();
+    } else {
+      this.recurringFields.style.display = 'none';
+      this.startDateInput.required = false;
+      this.frequencySelect.required = false;
+      this.recurringPreviewDiv.style.display = 'none';
+    }
+  }
+
+  /**
+   * Handle recurring field changes
+   * @private
+   */
+  handleRecurringFieldChange() {
+    if (this.isRecurringCheckbox.checked) {
+      this.updateRecurringPreview();
+    }
+  }
+
+  /**
+   * Update recurring expense preview
+   * @private
+   */
+  updateRecurringPreview() {
+    const amount = parseMoney(this.amountInput.value);
+    const frequency = this.frequencySelect.value;
+    const startDate = this.startDateInput.value;
+
+    if (!amount || amount <= 0 || !startDate) {
+      this.recurringPreviewDiv.style.display = 'none';
+      return;
+    }
+
+    const state = store.getState();
+    const cycleEnd = state.budget.cycleEndDate;
+
+    if (!cycleEnd) {
+      this.recurringPreviewDiv.style.display = 'none';
+      return;
+    }
+
+    // Calculate occurrences in current cycle
+    const occurrences = RecurringExpense.calculateOccurrences(
+      frequency,
+      startDate,
+      getToday(),
+      cycleEnd,
+      this.endDateInput.value || null
+    );
+
+    const totalDeduction = amount * occurrences;
+    const frequencyLabel = RecurringExpense.getFrequencyLabel(frequency);
+
+    if (occurrences > 0) {
+      this.recurringPreviewText.textContent =
+        `${frequencyLabel} • ${occurrences} occurrence${occurrences > 1 ? 's' : ''} this cycle = ${formatMoney(totalDeduction)} total`;
+      this.recurringPreviewDiv.style.display = 'block';
+    } else {
+      this.recurringPreviewText.textContent =
+        `${frequencyLabel} • No occurrences in current cycle`;
+      this.recurringPreviewDiv.style.display = 'block';
+    }
   }
 
   /**

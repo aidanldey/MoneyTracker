@@ -783,6 +783,61 @@
   line-height: 1.4;
 }
 
+/* Checkbox labels */
+.checkbox-label {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  cursor: pointer;
+  padding: var(--spacing-md);
+  border: 2px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background-color: var(--color-background);
+  transition: all 0.2s ease;
+}
+
+.checkbox-label:hover {
+  border-color: var(--color-primary);
+  background-color: rgba(59, 130, 246, 0.05);
+}
+
+.checkbox-label input[type="checkbox"] {
+  width: 20px;
+  height: 20px;
+  margin: 0;
+  cursor: pointer;
+  accent-color: var(--color-primary);
+}
+
+.checkbox-label:has(input[type="checkbox"]:checked) {
+  border-color: var(--color-primary);
+  background-color: rgba(59, 130, 246, 0.1);
+}
+
+.checkbox-label span {
+  flex: 1;
+  font-weight: var(--font-weight-medium);
+}
+
+.checkbox-label input[type="checkbox"]:checked + span {
+  color: var(--color-primary);
+}
+
+/* Recurring preview */
+.recurring-preview {
+  padding: var(--spacing-md);
+  background-color: rgba(59, 130, 246, 0.1);
+  border-left: 3px solid var(--color-primary);
+  border-radius: var(--radius-sm);
+  margin-top: var(--spacing-md);
+}
+
+.recurring-preview .help-text {
+  margin: 0;
+  opacity: 0.9;
+  font-weight: var(--font-weight-medium);
+}
+
 /* ========================================
    END OF DAY MODAL
    ======================================== */
