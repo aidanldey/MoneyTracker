@@ -88,8 +88,7 @@ export class SavingsFund {
     this.renderHistory();
 
     // Show modal
-    this.modal.style.display = 'block';
-    this.overlay.style.display = 'block';
+    this.modal.removeAttribute('hidden');
 
     console.log('SavingsFund: Modal opened');
   }
@@ -98,8 +97,7 @@ export class SavingsFund {
    * Close the modal
    */
   close() {
-    this.modal.style.display = 'none';
-    this.overlay.style.display = 'none';
+    this.modal.setAttribute('hidden', '');
     this.currentView = 'main';
   }
 

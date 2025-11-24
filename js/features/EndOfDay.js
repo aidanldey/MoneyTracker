@@ -89,8 +89,7 @@ export class EndOfDay {
     }
 
     // Show modal
-    this.modal.style.display = 'block';
-    this.overlay.style.display = 'block';
+    this.modal.removeAttribute('hidden');
 
     console.log('EndOfDay: Modal opened', {
       scenario: this.currentScenario,
@@ -104,8 +103,7 @@ export class EndOfDay {
    * Close the modal
    */
   close() {
-    this.modal.style.display = 'none';
-    this.overlay.style.display = 'none';
+    this.modal.setAttribute('hidden', '');
     this.currentScenario = null;
     this.difference = 0;
   }
