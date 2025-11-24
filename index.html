@@ -140,6 +140,12 @@
           aria-label="End of day reconciliation">
           End of Day
         </button>
+        <button
+          class="btn btn-secondary"
+          data-action="view-history"
+          aria-label="View expense history">
+          View History
+        </button>
       </section>
 
       <!-- FIRST-TIME USER HINT -->
@@ -775,6 +781,119 @@
               <button id="savings-withdraw-cancel-btn" class="btn btn-secondary">Cancel</button>
               <button id="savings-withdraw-confirm-btn" class="btn btn-primary" disabled>Withdraw</button>
             </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- EXPENSE HISTORY MODAL -->
+  <div
+    id="expense-history-modal"
+    class="modal history-modal"
+    hidden>
+    <div class="modal-overlay" data-action="close-modal"></div>
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2 class="modal-title">Expense History</h2>
+        <button
+          class="icon-button"
+          data-action="close-modal"
+          aria-label="Close modal">
+          ✕
+        </button>
+      </div>
+
+      <div class="modal-body">
+        <!-- LEVEL 1: Summary View -->
+        <div id="history-summary-view" class="history-view">
+          <div class="summary-card-large">
+            <p class="summary-label">This Cycle</p>
+            <p class="summary-total">
+              Total Spent: <span id="history-total-spent" class="money-value">$0.00</span>
+            </p>
+          </div>
+          <button id="view-breakdown-btn" class="btn btn-primary btn-full">
+            📊 View Breakdown
+          </button>
+        </div>
+
+        <!-- LEVEL 2: Daily/Weekly Breakdown View -->
+        <div id="history-breakdown-view" class="history-view" style="display: none;">
+          <div id="weekly-breakdown-list" class="breakdown-list">
+            <!-- Weekly breakdown will be inserted here -->
+          </div>
+          <div class="breakdown-actions">
+            <button id="view-category-btn" class="btn btn-secondary btn-full">
+              🏷️ View by Category
+            </button>
+            <button id="view-all-expenses-btn" class="btn btn-secondary btn-full">
+              📋 View All Expenses
+            </button>
+            <button id="back-to-summary-btn" class="btn btn-text btn-full">
+              ← Back to Summary
+            </button>
+          </div>
+        </div>
+
+        <!-- LEVEL 3: Category Breakdown View -->
+        <div id="history-category-view" class="history-view" style="display: none;">
+          <div id="category-breakdown-list" class="category-list">
+            <!-- Category breakdown will be inserted here -->
+          </div>
+          <div class="category-actions">
+            <button id="view-all-from-category-btn" class="btn btn-secondary btn-full">
+              📋 View All Expenses
+            </button>
+            <button id="back-to-breakdown-btn" class="btn btn-text btn-full">
+              ← Back to Breakdown
+            </button>
+          </div>
+        </div>
+
+        <!-- LEVEL 4: Full Expense List View -->
+        <div id="history-full-list-view" class="history-view" style="display: none;">
+          <div class="list-controls">
+            <div class="search-box">
+              <input
+                type="text"
+                id="expense-search-input"
+                placeholder="🔍 Search expenses..."
+                class="search-input">
+            </div>
+            <div class="filter-controls">
+              <select id="filter-category-select" class="filter-select">
+                <option value="">All Categories</option>
+                <option value="food">Food</option>
+                <option value="transportation">Transportation</option>
+                <option value="utilities">Utilities</option>
+                <option value="housing">Housing</option>
+                <option value="entertainment">Entertainment</option>
+                <option value="medical">Medical</option>
+                <option value="debt">Debt</option>
+                <option value="other">Other</option>
+                <option value="uncategorized">Uncategorized</option>
+              </select>
+              <select id="expense-sort-select" class="filter-select">
+                <option value="date-desc">Newest First</option>
+                <option value="date-asc">Oldest First</option>
+                <option value="amount-desc">Highest Amount</option>
+                <option value="amount-asc">Lowest Amount</option>
+              </select>
+            </div>
+          </div>
+
+          <div id="expense-list-container" class="expense-list-scroll">
+            <!-- Expense list will be inserted here -->
+          </div>
+
+          <div class="list-actions">
+            <button id="export-csv-btn" class="btn btn-secondary btn-full">
+              📥 Export to CSV
+            </button>
+            <button id="back-to-breakdown-btn-2" class="btn btn-text btn-full">
+              ← Back to Breakdown
+            </button>
           </div>
         </div>
       </div>

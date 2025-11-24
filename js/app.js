@@ -14,6 +14,7 @@ import initialExpensesForm from './features/InitialExpensesForm.js';
 import initialExpensesList from './features/InitialExpensesList.js';
 import { initEndOfDay } from './features/EndOfDay.js';
 import { initSavingsFund } from './features/SavingsFund.js';
+import { initExpenseHistory } from './features/ExpenseHistory.js';
 import { getToday } from './utils/dateUtils.js';
 
 /**
@@ -51,6 +52,9 @@ class App {
 
       // Initialize savings fund feature
       initSavingsFund(store);
+
+      // Initialize expense history feature
+      initExpenseHistory();
 
       // Set up global event listeners
       this.setupEventListeners();
