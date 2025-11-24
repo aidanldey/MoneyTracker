@@ -1083,6 +1083,308 @@
 }
 
 /* ========================================
+   SAVINGS FUND MODAL
+   ======================================== */
+
+/* Savings modal */
+.savings-modal {
+  z-index: 2000;
+}
+
+.savings-modal .modal-content {
+  max-width: 500px;
+}
+
+/* Savings views */
+.savings-view {
+  animation: fadeIn 0.2s ease;
+}
+
+/* Current savings display */
+.savings-current {
+  text-align: center;
+  padding: var(--spacing-2xl) var(--spacing-lg);
+  background: linear-gradient(135deg, rgba(59, 130, 246, 0.1) 0%, rgba(16, 185, 129, 0.1) 100%);
+  border-radius: var(--radius-lg);
+  margin-bottom: var(--spacing-xl);
+}
+
+.savings-label {
+  font-size: var(--font-size-small);
+  font-weight: var(--font-weight-medium);
+  color: var(--color-text);
+  opacity: 0.7;
+  margin: 0 0 var(--spacing-sm) 0;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.savings-amount {
+  font-size: var(--font-size-hero);
+  font-weight: var(--font-weight-bold);
+  color: var(--color-status-good);
+  margin: 0;
+  line-height: 1;
+}
+
+/* Savings actions */
+.savings-actions {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-md);
+  margin-bottom: var(--spacing-xl);
+}
+
+/* View headers */
+.view-header {
+  margin-bottom: var(--spacing-xl);
+  text-align: center;
+}
+
+.view-title {
+  font-size: var(--font-size-base);
+  font-weight: var(--font-weight-bold);
+  color: var(--color-text);
+  margin: 0 0 var(--spacing-sm) 0;
+}
+
+.view-subtitle {
+  font-size: var(--font-size-small);
+  color: var(--color-text);
+  opacity: 0.7;
+  margin: 0;
+  line-height: 1.4;
+}
+
+/* Input with button */
+.input-with-button {
+  display: flex;
+  gap: var(--spacing-sm);
+  align-items: center;
+}
+
+.input-with-button input {
+  flex: 1;
+}
+
+.btn-inline {
+  min-height: 44px;
+  padding: var(--spacing-sm) var(--spacing-md);
+  font-size: var(--font-size-small);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-primary);
+  background-color: transparent;
+  border: 2px solid var(--color-primary);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.btn-inline:hover {
+  background-color: rgba(59, 130, 246, 0.1);
+}
+
+.btn-inline:active {
+  transform: scale(0.98);
+}
+
+/* Preview box (reusable) */
+.preview-box {
+  background-color: rgba(59, 130, 246, 0.05);
+  border: 1px solid var(--color-primary);
+  border-radius: var(--radius-md);
+  padding: var(--spacing-lg);
+  margin-bottom: var(--spacing-xl);
+}
+
+.preview-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--spacing-sm) 0;
+}
+
+.preview-row + .preview-row {
+  border-top: 1px solid var(--color-border);
+}
+
+.preview-row span:first-child {
+  font-size: var(--font-size-small);
+  color: var(--color-text);
+  opacity: 0.7;
+}
+
+.preview-row span:last-child {
+  font-size: var(--font-size-base);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text);
+}
+
+.preview-note {
+  font-size: var(--font-size-small);
+  color: var(--color-text);
+  opacity: 0.7;
+  margin: var(--spacing-md) 0 0 0;
+  padding-top: var(--spacing-md);
+  border-top: 1px solid var(--color-border);
+  text-align: center;
+}
+
+.preview-error {
+  font-size: var(--font-size-small);
+  color: var(--color-status-danger);
+  font-weight: var(--font-weight-medium);
+  margin: 0;
+  text-align: center;
+}
+
+/* Radio group vertical */
+.radio-group-vertical {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-md);
+  margin-top: var(--spacing-sm);
+}
+
+.radio-group-vertical .radio-label {
+  flex-direction: row;
+  align-items: flex-start;
+  padding: var(--spacing-md);
+}
+
+.radio-group-vertical .radio-label input[type="radio"] {
+  margin-top: 2px;
+  flex-shrink: 0;
+}
+
+.radio-content {
+  flex: 1;
+}
+
+.radio-content strong {
+  display: block;
+  font-size: var(--font-size-base);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text);
+  margin-bottom: var(--spacing-xs);
+}
+
+.radio-description {
+  font-size: var(--font-size-small);
+  color: var(--color-text);
+  opacity: 0.7;
+  margin: 0;
+  line-height: 1.4;
+}
+
+/* Savings history */
+.savings-history {
+  margin-top: var(--spacing-2xl);
+  padding-top: var(--spacing-xl);
+  border-top: 2px solid var(--color-border);
+}
+
+.history-title {
+  font-size: var(--font-size-base);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text);
+  margin: 0 0 var(--spacing-lg) 0;
+}
+
+.history-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-md);
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+.history-item {
+  display: flex;
+  gap: var(--spacing-md);
+  padding: var(--spacing-md);
+  background-color: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  transition: box-shadow 0.2s ease;
+}
+
+.history-item:hover {
+  box-shadow: var(--shadow-sm);
+}
+
+.history-item.add {
+  border-left: 3px solid var(--color-status-good);
+}
+
+.history-item.withdraw {
+  border-left: 3px solid var(--color-primary);
+}
+
+.history-icon {
+  font-size: 1.5rem;
+  line-height: 1;
+  flex-shrink: 0;
+}
+
+.history-details {
+  flex: 1;
+  min-width: 0;
+}
+
+.history-main {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--spacing-xs);
+}
+
+.history-type {
+  font-size: var(--font-size-base);
+  font-weight: var(--font-weight-medium);
+  color: var(--color-text);
+}
+
+.history-amount {
+  font-size: var(--font-size-base);
+  font-weight: var(--font-weight-bold);
+  color: var(--color-text);
+}
+
+.history-meta {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  margin-bottom: var(--spacing-xs);
+}
+
+.history-date {
+  font-size: var(--font-size-small);
+  color: var(--color-text);
+  opacity: 0.6;
+}
+
+.history-note {
+  font-size: var(--font-size-small);
+  color: var(--color-primary);
+  background-color: rgba(59, 130, 246, 0.1);
+  padding: 2px var(--spacing-sm);
+  border-radius: var(--radius-sm);
+}
+
+.history-balance {
+  font-size: var(--font-size-small);
+  color: var(--color-text);
+  opacity: 0.7;
+}
+
+.history-balance .money-value {
+  font-weight: var(--font-weight-semibold);
+  opacity: 1;
+}
+
+/* ========================================
    INCOME SETUP WIZARD
    ======================================== */
 

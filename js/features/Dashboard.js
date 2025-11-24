@@ -12,6 +12,7 @@ import { formatMoney } from '../utils/moneyUtils.js';
 import { formatDate } from '../utils/dateUtils.js';
 import initialExpensesList from './InitialExpensesList.js';
 import { getEndOfDay } from './EndOfDay.js';
+import { getSavingsFund } from './SavingsFund.js';
 
 /**
  * Dashboard class manages the main dashboard view
@@ -28,6 +29,7 @@ export class Dashboard {
 
     this.totalBalanceEl = document.querySelector('[data-value="total-balance"]');
     this.savingsFundEl = document.querySelector('[data-value="savings-fund"]');
+    this.savingsCard = document.querySelector('[data-card="savings"]');
     this.dailyBudgetEl = document.querySelector('[data-value="daily-budget"]');
     this.daysRemainingEl = document.querySelector('[data-value="days-remaining"]');
     this.endDateEl = document.querySelector('[data-value="end-date"]');
@@ -59,6 +61,7 @@ export class Dashboard {
     this.handleInfoClick = this.handleInfoClick.bind(this);
     this.handleHintDismiss = this.handleHintDismiss.bind(this);
     this.handleEndOfDay = this.handleEndOfDay.bind(this);
+    this.handleSavingsCard = this.handleSavingsCard.bind(this);
 
     // Track collapse state
     this.expensesExpanded = true;
@@ -153,6 +156,18 @@ export class Dashboard {
     // Listen for budget-updated event (from EndOfDay)
     document.addEventListener('budget-updated', () => {
       console.log('Budget updated, re-rendering dashboard');
+      this.render();
+    });
+
+    // Savings card click
+    if (this.savingsCard) {
+      this.savingsCard.addEventListener('click', this.handleSavingsCard);
+      this.savingsCard.style.cursor = 'pointer';
+    }
+
+    // Listen for savings-updated event
+    document.addEventListener('savings-updated', () => {
+      console.log('Savings updated, re-rendering dashboard');
       this.render();
     });
   }
@@ -499,6 +514,21 @@ This helps you avoid overspending and ensures you can cover your obligations.`;
     } catch (error) {
       console.error('Error opening End of Day modal:', error);
       alert('End of Day feature is not available yet. Please try again later.');
+    }
+  }
+
+  /**
+   * Handle savings card click
+   * @private
+   */
+  handleSavingsCard() {
+    console.log('Opening Savings Fund modal...');
+    try {
+      const savingsFund = getSavingsFund();
+      savingsFund.open();
+    } catch (error) {
+      console.error('Error opening Savings Fund modal:', error);
+      alert('Savings Fund feature is not available yet. Please try again later.');
     }
   }
 

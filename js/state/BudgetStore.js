@@ -67,6 +67,11 @@ export class BudgetStore {
         savedState.budget.recurringExpenseDeduction = 0;
       }
 
+      // Backward compatibility: Add savingsHistory if missing
+      if (!savedState.savingsHistory) {
+        savedState.savingsHistory = [];
+      }
+
       return savedState;
     }
 
@@ -109,6 +114,7 @@ export class BudgetStore {
       },
       recurringExpenses: [],
       expenses: [],
+      savingsHistory: [],
       ui: {
         currentView: 'dashboard',
         showModal: null

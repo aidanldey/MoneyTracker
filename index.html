@@ -631,6 +631,142 @@
         </div>
       </div>
     </div>
+
+    <!-- Savings Fund Modal -->
+    <div id="savings-overlay" class="modal-overlay" style="display: none;"></div>
+    <div
+      id="savings-modal"
+      class="modal savings-modal"
+      data-modal="savings"
+      role="dialog"
+      aria-labelledby="savings-modal-title"
+      aria-modal="true"
+      style="display: none;">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h2 id="savings-modal-title" class="modal-title">Savings Fund</h2>
+          <button
+            id="savings-close-btn"
+            class="icon-button"
+            aria-label="Close modal">
+            ✕
+          </button>
+        </div>
+
+        <div class="modal-body">
+          <!-- MAIN VIEW -->
+          <div id="savings-main-view" class="savings-view">
+            <div class="savings-current">
+              <p class="savings-label">Current Savings</p>
+              <p id="savings-current-amount" class="savings-amount money-value">$0.00</p>
+            </div>
+
+            <div class="savings-actions">
+              <button id="savings-add-btn" class="btn btn-primary btn-block">
+                ➕ Add Money
+              </button>
+              <button id="savings-withdraw-btn" class="btn btn-secondary btn-block">
+                ➖ Withdraw Money
+              </button>
+            </div>
+
+            <!-- HISTORY -->
+            <div id="savings-history" class="savings-history" style="display: none;">
+              <h3 class="history-title">Recent Activity</h3>
+              <div id="savings-history-list" class="history-list">
+                <!-- History items will be inserted here -->
+              </div>
+            </div>
+          </div>
+
+          <!-- ADD MONEY VIEW -->
+          <div id="savings-add-view" class="savings-view" style="display: none;">
+            <div class="view-header">
+              <h3 class="view-title">Add Money to Savings</h3>
+              <p class="view-subtitle">Move money from your current balance to savings</p>
+            </div>
+
+            <div class="form-group">
+              <label for="savings-add-amount">Amount</label>
+              <div class="input-with-button">
+                <input
+                  type="number"
+                  id="savings-add-amount"
+                  placeholder="0.00"
+                  step="0.01"
+                  min="0.01">
+                <button id="savings-add-max-btn" class="btn-inline">Max</button>
+              </div>
+              <p class="help-text">
+                Available: <span id="savings-add-available" class="money-value">$0.00</span>
+              </p>
+            </div>
+
+            <div id="savings-add-preview" class="preview-box" style="display: none;">
+              <!-- Preview will be inserted here -->
+            </div>
+
+            <div class="modal-actions">
+              <button id="savings-add-cancel-btn" class="btn btn-secondary">Cancel</button>
+              <button id="savings-add-confirm-btn" class="btn btn-primary" disabled>Add to Savings</button>
+            </div>
+          </div>
+
+          <!-- WITHDRAW MONEY VIEW -->
+          <div id="savings-withdraw-view" class="savings-view" style="display: none;">
+            <div class="view-header">
+              <h3 class="view-title">Withdraw from Savings</h3>
+              <p class="view-subtitle">Move money from savings back to your budget</p>
+            </div>
+
+            <div class="form-group">
+              <label for="savings-withdraw-amount">Amount</label>
+              <div class="input-with-button">
+                <input
+                  type="number"
+                  id="savings-withdraw-amount"
+                  placeholder="0.00"
+                  step="0.01"
+                  min="0.01">
+                <button id="savings-withdraw-max-btn" class="btn-inline">Max</button>
+              </div>
+              <p class="help-text">
+                Available: <span id="savings-withdraw-available" class="money-value">$0.00</span>
+              </p>
+            </div>
+
+            <div class="form-group">
+              <label>How would you like to use this money?</label>
+              <div class="radio-group-vertical">
+                <label class="radio-label">
+                  <input type="radio" name="withdraw-option" id="withdraw-today" value="today" checked>
+                  <div class="radio-content">
+                    <strong>Add to Today's Budget</strong>
+                    <p class="radio-description">Add to available funds for today only</p>
+                  </div>
+                </label>
+                <label class="radio-label">
+                  <input type="radio" name="withdraw-option" id="withdraw-redistribute" value="redistribute">
+                  <div class="radio-content">
+                    <strong>Redistribute to All Days</strong>
+                    <p class="radio-description">Increase daily budget for remaining days</p>
+                  </div>
+                </label>
+              </div>
+            </div>
+
+            <div id="savings-withdraw-preview" class="preview-box" style="display: none;">
+              <!-- Preview will be inserted here -->
+            </div>
+
+            <div class="modal-actions">
+              <button id="savings-withdraw-cancel-btn" class="btn btn-secondary">Cancel</button>
+              <button id="savings-withdraw-confirm-btn" class="btn btn-primary" disabled>Withdraw</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
 
   <!-- Scripts -->
