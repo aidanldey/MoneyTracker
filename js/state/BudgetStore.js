@@ -72,6 +72,11 @@ export class BudgetStore {
         savedState.savingsHistory = [];
       }
 
+      // Backward compatibility: Add archives if missing
+      if (!savedState.archives) {
+        savedState.archives = [];
+      }
+
       return savedState;
     }
 
@@ -115,6 +120,7 @@ export class BudgetStore {
       recurringExpenses: [],
       expenses: [],
       savingsHistory: [],
+      archives: [],
       ui: {
         currentView: 'dashboard',
         showModal: null
@@ -1032,6 +1038,54 @@ export class BudgetStore {
 
       default:
         return addDays(current, 14);
+    }
+  }
+
+  /**
+   * Add archive to state
+   * @param {Object} archive - Archive object
+   * @returns {boolean} Success status
+   */
+  addArchive(archive) {
+    try {
+      const archives = [...this.state.archives, archive];
+
+      this.setState({
+        archives
+      });
+
+      console.log('Archive added successfully:', {
+        id: archive.id,
+        period: `${formatDate(new Date(archive.period.start), 'short')} - ${formatDate(new Date(archive.period.end), 'short')}`,
+        totalSpent: formatMoney(archive.summary.totalSpent)
+      });
+
+      return true;
+    } catch (error) {
+      console.error('Error adding archive:', error);
+      return false;
+    }
+  }
+
+  /**
+   * Delete archive from state
+   * @param {string} archiveId - Archive ID
+   * @returns {boolean} Success status
+   */
+  deleteArchive(archiveId) {
+    try {
+      const archives = this.state.archives.filter(a => a.id !== archiveId);
+
+      this.setState({
+        archives
+      });
+
+      console.log('Archive deleted successfully:', archiveId);
+
+      return true;
+    } catch (error) {
+      console.error('Error deleting archive:', error);
+      return false;
     }
   }
 }

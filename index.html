@@ -146,6 +146,18 @@
           aria-label="View expense history">
           View History
         </button>
+        <button
+          class="btn btn-secondary"
+          data-action="view-archives"
+          aria-label="View archived pay periods">
+          View Archives
+        </button>
+        <button
+          class="btn btn-warning"
+          data-action="start-new-period"
+          aria-label="Start new pay period">
+          Start New Period
+        </button>
       </section>
 
       <!-- FIRST-TIME USER HINT -->
@@ -893,6 +905,111 @@
             </button>
             <button id="back-to-breakdown-btn-2" class="btn btn-text btn-full">
               ← Back to Breakdown
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- PAY PERIOD TRANSITION MODAL -->
+  <div
+    id="pay-period-transition-modal"
+    class="modal transition-modal"
+    hidden>
+    <div class="modal-overlay" data-action="close-modal"></div>
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2 class="modal-title">Pay Period Ending</h2>
+        <button
+          class="icon-button"
+          data-action="close-modal"
+          aria-label="Close modal">
+          ✕
+        </button>
+      </div>
+
+      <div class="modal-body">
+        <p class="transition-intro">Your pay period is ending. What would you like to do with your data?</p>
+
+        <div id="period-summary" class="period-summary-box">
+          <!-- Summary will be inserted here -->
+        </div>
+
+        <div class="transition-options">
+          <!-- Option 1: Archive and Start Fresh -->
+          <button id="archive-start-btn" class="option-card">
+            <div class="option-icon">📦</div>
+            <div class="option-content">
+              <h3 class="option-title">Archive and Start Fresh</h3>
+              <p class="option-description">
+                Saves current period data to archive. Preserves income settings and recurring expenses.
+              </p>
+              <label class="checkbox-option">
+                <input type="checkbox" id="keep-savings-checkbox" checked>
+                <span>Keep savings fund</span>
+              </label>
+            </div>
+          </button>
+
+          <!-- Option 2: Clear and Start Fresh -->
+          <button id="clear-start-btn" class="option-card option-warning">
+            <div class="option-icon">🗑️</div>
+            <div class="option-content">
+              <h3 class="option-title">Clear and Start Fresh</h3>
+              <p class="option-description">
+                Clears all data except settings. Quick start for new period. No archive created.
+              </p>
+            </div>
+          </button>
+
+          <!-- Option 3: Continue with Current Data -->
+          <button id="continue-data-btn" class="option-card">
+            <div class="option-icon">➡️</div>
+            <div class="option-content">
+              <h3 class="option-title">Continue with Current Data</h3>
+              <p class="option-description">
+                Roll over remaining balance. Keep all expenses. Update dates only.
+              </p>
+            </div>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ARCHIVE VIEWER MODAL -->
+  <div
+    id="archive-viewer-modal"
+    class="modal archive-modal"
+    hidden>
+    <div class="modal-overlay" data-action="close-modal"></div>
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2 class="modal-title">Archived Pay Periods</h2>
+        <button
+          class="icon-button"
+          data-action="close-modal"
+          aria-label="Close modal">
+          ✕
+        </button>
+      </div>
+
+      <div class="modal-body">
+        <!-- Archive List View -->
+        <div id="archive-list" class="archive-list-view">
+          <!-- Archive items will be inserted here -->
+        </div>
+
+        <!-- Archive Detail View -->
+        <div id="archive-detail" class="archive-detail-view" style="display: none;">
+          <!-- Archive detail will be inserted here -->
+          <div class="archive-detail-actions">
+            <button id="back-to-archive-list-btn" class="btn btn-text">
+              ← Back to Archives
+            </button>
+            <button id="export-archive-btn" class="btn btn-secondary">
+              📥 Export CSV
             </button>
           </div>
         </div>

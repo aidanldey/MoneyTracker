@@ -15,6 +15,7 @@ import initialExpensesList from './features/InitialExpensesList.js';
 import { initEndOfDay } from './features/EndOfDay.js';
 import { initSavingsFund } from './features/SavingsFund.js';
 import { initExpenseHistory } from './features/ExpenseHistory.js';
+import { initPayPeriodManager } from './features/PayPeriodManager.js';
 import { getToday } from './utils/dateUtils.js';
 
 /**
@@ -55,6 +56,9 @@ class App {
 
       // Initialize expense history feature
       initExpenseHistory();
+
+      // Initialize pay period manager
+      initPayPeriodManager();
 
       // Set up global event listeners
       this.setupEventListeners();
