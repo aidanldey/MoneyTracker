@@ -314,18 +314,30 @@
             </div>
 
             <div class="form-group">
-              <label for="expense-category">Category</label>
+              <label for="expense-category">Categorize? (optional)</label>
               <select
                 id="expense-category"
                 name="category">
-                <option value="food">Food & Dining</option>
-                <option value="transport">Transportation</option>
-                <option value="shopping">Shopping</option>
+                <option value="" selected>No category</option>
+                <option value="food">Food</option>
+                <option value="transportation">Transportation</option>
+                <option value="utilities">Utilities</option>
+                <option value="housing">Housing</option>
                 <option value="entertainment">Entertainment</option>
-                <option value="bills">Bills & Utilities</option>
-                <option value="health">Health & Wellness</option>
-                <option value="other" selected>Other</option>
+                <option value="medical">Medical</option>
+                <option value="debt">Debt</option>
+                <option value="other">Other</option>
               </select>
+            </div>
+
+            <div class="form-group" id="expense-custom-name-group" style="display: none;">
+              <label for="expense-custom-name">Custom name (optional)</label>
+              <input
+                type="text"
+                id="expense-custom-name"
+                name="customName"
+                placeholder="e.g., Groceries - Weekly"
+                maxlength="100">
             </div>
 
             <div class="form-group">

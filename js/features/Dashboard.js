@@ -13,6 +13,7 @@ import { formatDate } from '../utils/dateUtils.js';
 import initialExpensesList from './InitialExpensesList.js';
 import { getEndOfDay } from './EndOfDay.js';
 import { getSavingsFund } from './SavingsFund.js';
+import Expense from '../models/Expense.js';
 
 /**
  * Dashboard class manages the main dashboard view
@@ -423,10 +424,16 @@ export class Dashboard {
     item.className = 'expense-item';
     item.setAttribute('data-expense-id', expense.id);
 
+    // Get category label if it exists
+    const categoryLabel = Expense.getCategoryLabel(expense);
+    const categoryBadge = categoryLabel
+      ? `<span class="category-badge">${this.escapeHtml(categoryLabel)}</span>`
+      : '';
+
     item.innerHTML = `
       <div class="expense-info">
         <p class="expense-description">${this.escapeHtml(expense.description)}</p>
-        <p class="expense-category">${this.escapeHtml(expense.category)}</p>
+        ${categoryBadge}
       </div>
       <span class="expense-amount money-value">${formatMoney(expense.amount)}</span>
     `;

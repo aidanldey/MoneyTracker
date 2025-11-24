@@ -26,6 +26,8 @@ export class ExpenseForm {
     this.amountInput = document.getElementById('expense-amount');
     this.descriptionInput = document.getElementById('expense-description');
     this.categorySelect = document.getElementById('expense-category');
+    this.customNameInput = document.getElementById('expense-custom-name');
+    this.customNameGroup = document.getElementById('expense-custom-name-group');
     this.closeButtons = this.modal.querySelectorAll('[data-action="close-modal"]');
     this.overlay = this.modal.querySelector('.modal-overlay');
     this.submitButton = this.form.querySelector('button[type="submit"]');
@@ -46,6 +48,7 @@ export class ExpenseForm {
     this.handleSubmit = this.handleSubmit.bind(this);
     this.handleCancel = this.handleCancel.bind(this);
     this.handleAmountInput = this.handleAmountInput.bind(this);
+    this.handleCategoryChange = this.handleCategoryChange.bind(this);
     this.handleRecurringToggle = this.handleRecurringToggle.bind(this);
     this.handleRecurringFieldChange = this.handleRecurringFieldChange.bind(this);
 
@@ -108,6 +111,9 @@ export class ExpenseForm {
     // Amount input for live validation and preview
     this.amountInput.addEventListener('input', this.handleAmountInput);
 
+    // Category select for showing/hiding custom name input
+    this.categorySelect.addEventListener('change', this.handleCategoryChange);
+
     // Recurring expense checkbox
     if (this.isRecurringCheckbox) {
       this.isRecurringCheckbox.addEventListener('change', this.handleRecurringToggle);
@@ -147,6 +153,12 @@ export class ExpenseForm {
     this.form.reset();
     this.hidePreview();
     this.clearErrors();
+
+    // Reset custom name field
+    if (this.customNameGroup) {
+      this.customNameGroup.style.display = 'none';
+      this.customNameInput.value = '';
+    }
 
     // Reset recurring fields
     if (this.recurringFields) {
@@ -204,6 +216,22 @@ export class ExpenseForm {
       // Empty or zero input
       this.hidePreview();
       this.submitButton.disabled = false;
+    }
+  }
+
+  /**
+   * Handle category select change
+   * @private
+   */
+  handleCategoryChange() {
+    const categoryValue = this.categorySelect.value;
+
+    // Show custom name input if a category is selected
+    if (categoryValue) {
+      this.customNameGroup.style.display = 'block';
+    } else {
+      this.customNameGroup.style.display = 'none';
+      this.customNameInput.value = ''; // Clear custom name when category is deselected
     }
   }
 
@@ -394,7 +422,8 @@ export class ExpenseForm {
     // Get form values
     const amount = validation.amount;
     const description = this.descriptionInput.value.trim() || 'Expense';
-    const category = this.categorySelect.value;
+    const categoryType = this.categorySelect.value;
+    const customName = this.customNameInput.value.trim();
     const isRecurring = this.isRecurringCheckbox.checked;
 
     // Handle recurring expense
@@ -413,12 +442,19 @@ export class ExpenseForm {
       const recurringExpense = {
         amount,
         description,
-        category,
         frequency,
         startDate,
         endDate,
         isRecurring: true
       };
+
+      // Add category if selected
+      if (categoryType) {
+        recurringExpense.category = {
+          type: categoryType,
+          customName: customName || null
+        };
+      }
 
       // Validate with RecurringExpense model
       const validationResult = RecurringExpense.validate(recurringExpense);
@@ -465,9 +501,16 @@ export class ExpenseForm {
     const expense = {
       amount,
       description,
-      category,
       date: getToday().toISOString()
     };
+
+    // Add category if selected
+    if (categoryType) {
+      expense.category = {
+        type: categoryType,
+        customName: customName || null
+      };
+    }
 
     // Add expense
     const success = this.addExpense(expense);
@@ -496,7 +539,7 @@ export class ExpenseForm {
         console.log('Expense added successfully:', {
           amount: formatMoney(expense.amount),
           description: expense.description,
-          category: expense.category
+          category: expense.category || 'None'
         });
       }
 
@@ -637,11 +680,22 @@ export class ExpenseForm {
    * @returns {Object} Current form values
    */
   getFormValues() {
-    return {
+    const values = {
       amount: parseMoney(this.amountInput.value),
-      description: this.descriptionInput.value.trim(),
-      category: this.categorySelect.value
+      description: this.descriptionInput.value.trim()
     };
+
+    const categoryType = this.categorySelect.value;
+    const customName = this.customNameInput.value.trim();
+
+    if (categoryType) {
+      values.category = {
+        type: categoryType,
+        customName: customName || null
+      };
+    }
+
+    return values;
   }
 }
 
