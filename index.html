@@ -134,6 +134,12 @@
           aria-label="Manage initial expenses and obligations">
           Manage Obligations
         </button>
+        <button
+          class="btn btn-secondary"
+          id="end-of-day-btn"
+          aria-label="End of day reconciliation">
+          End of Day
+        </button>
       </section>
 
       <!-- FIRST-TIME USER HINT -->
@@ -493,53 +499,132 @@
     </div>
 
     <!-- End of Day Modal -->
+    <div id="end-of-day-overlay" class="modal-overlay" style="display: none;"></div>
     <div
-      id="eod-modal"
-      class="modal"
+      id="end-of-day-modal"
+      class="modal eod-modal"
       data-modal="end-of-day"
       role="dialog"
       aria-labelledby="eod-modal-title"
       aria-modal="true"
-      hidden>
-      <div class="modal-overlay" data-action="close-modal"></div>
+      style="display: none;">
       <div class="modal-content">
         <div class="modal-header">
-          <h2 id="eod-modal-title" class="modal-title">End of Day Summary</h2>
+          <h2 id="eod-modal-title" class="modal-title">End of Day</h2>
           <button
+            id="eod-close-btn"
             class="icon-button"
-            data-action="close-modal"
             aria-label="Close modal">
             ✕
           </button>
         </div>
 
         <div class="modal-body">
-          <div class="eod-summary">
-            <p class="eod-message" data-value="eod-message">
-              Great job staying within budget!
-            </p>
+          <!-- LEFTOVER FUNDS SCENARIO -->
+          <div id="eod-leftover-container" class="eod-scenario" style="display: none;">
+            <div class="eod-header eod-header-success">
+              <h3 class="eod-scenario-title">Great job! 🎉</h3>
+              <p class="eod-scenario-subtitle">You have leftover funds from today</p>
+            </div>
 
             <div class="eod-stats">
-              <div class="eod-stat">
-                <span class="eod-label">Budget:</span>
-                <span class="eod-value money-value" data-value="eod-budget">$0.00</span>
+              <div class="eod-stat-row">
+                <span class="eod-label">Daily Budget:</span>
+                <span id="eod-leftover-daily-budget" class="eod-value money-value">$0.00</span>
               </div>
-              <div class="eod-stat">
-                <span class="eod-label">Spent:</span>
-                <span class="eod-value money-value" data-value="eod-spent">$0.00</span>
-              </div>
-              <div class="eod-stat">
-                <span class="eod-label">Remaining:</span>
-                <span class="eod-value money-value" data-value="eod-remaining">$0.00</span>
+              <div class="eod-stat-row eod-stat-highlight">
+                <span class="eod-label">Leftover:</span>
+                <span id="eod-leftover-amount" class="eod-value eod-value-success money-value">$0.00</span>
               </div>
             </div>
 
-            <div class="modal-actions">
-              <button
-                type="button"
-                class="btn btn-primary"
-                data-action="close-modal">
-                Continue
+            <div class="eod-question">
+              <p>What would you like to do with the leftover funds?</p>
+            </div>
+
+            <div class="eod-options">
+              <button id="eod-add-to-savings" class="eod-option-btn">
+                <div class="eod-option-content">
+                  <span class="eod-option-icon">💰</span>
+                  <div class="eod-option-text">
+                    <strong>Add to Savings</strong>
+                    <p class="eod-option-description">Move leftover to your savings fund</p>
+                  </div>
+                </div>
+                <p id="eod-savings-preview" class="eod-preview"></p>
+              </button>
+
+              <button id="eod-redistribute" class="eod-option-btn">
+                <div class="eod-option-content">
+                  <span class="eod-option-icon">📊</span>
+                  <div class="eod-option-text">
+                    <strong>Redistribute</strong>
+                    <p class="eod-option-description">Spread across remaining days</p>
+                  </div>
+                </div>
+                <p id="eod-redistribute-preview" class="eod-preview"></p>
+              </button>
+
+              <button id="eod-leave-in-balance" class="eod-option-btn">
+                <div class="eod-option-content">
+                  <span class="eod-option-icon">💵</span>
+                  <div class="eod-option-text">
+                    <strong>Leave in Balance</strong>
+                    <p class="eod-option-description">Keep as extra cushion for today</p>
+                  </div>
+                </div>
+              </button>
+            </div>
+          </div>
+
+          <!-- OVERSPENT SCENARIO -->
+          <div id="eod-overspent-container" class="eod-scenario" style="display: none;">
+            <div class="eod-header eod-header-warning">
+              <h3 class="eod-scenario-title">Budget Exceeded</h3>
+              <p class="eod-scenario-subtitle">You spent more than your daily budget</p>
+            </div>
+
+            <div class="eod-stats">
+              <div class="eod-stat-row">
+                <span class="eod-label">Daily Budget:</span>
+                <span id="eod-overspent-daily-budget" class="eod-value money-value">$0.00</span>
+              </div>
+              <div class="eod-stat-row eod-stat-highlight">
+                <span class="eod-label">Over Budget:</span>
+                <span id="eod-overspent-amount" class="eod-value eod-value-warning money-value">$0.00</span>
+              </div>
+            </div>
+
+            <div class="eod-question">
+              <p>How would you like to handle the overspending?</p>
+            </div>
+
+            <div id="eod-savings-warning" class="eod-warning" style="display: none;">
+              <span class="warning-icon">⚠️</span>
+              <p class="warning-text"></p>
+            </div>
+
+            <div class="eod-options">
+              <button id="eod-use-savings" class="eod-option-btn">
+                <div class="eod-option-content">
+                  <span class="eod-option-icon">💰</span>
+                  <div class="eod-option-text">
+                    <strong>Use Savings</strong>
+                    <p class="eod-option-description">Cover overspending from savings</p>
+                  </div>
+                </div>
+                <p id="eod-use-savings-preview" class="eod-preview"></p>
+              </button>
+
+              <button id="eod-adjust-budget" class="eod-option-btn">
+                <div class="eod-option-content">
+                  <span class="eod-option-icon">📉</span>
+                  <div class="eod-option-text">
+                    <strong>Adjust Budget</strong>
+                    <p class="eod-option-description">Reduce daily budget for remaining days</p>
+                  </div>
+                </div>
+                <p id="eod-adjust-budget-preview" class="eod-preview"></p>
               </button>
             </div>
           </div>

@@ -12,6 +12,7 @@ import incomeSetup from './features/IncomeSetup.js';
 import expenseForm from './features/ExpenseForm.js';
 import initialExpensesForm from './features/InitialExpensesForm.js';
 import initialExpensesList from './features/InitialExpensesList.js';
+import { initEndOfDay } from './features/EndOfDay.js';
 import { getToday } from './utils/dateUtils.js';
 
 /**
@@ -43,6 +44,9 @@ class App {
 
       // Initialize dashboard
       dashboard.init();
+
+      // Initialize end-of-day feature
+      initEndOfDay(store);
 
       // Set up global event listeners
       this.setupEventListeners();

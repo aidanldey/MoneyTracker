@@ -11,6 +11,7 @@ import calculator from '../models/BudgetCalculator.js';
 import { formatMoney } from '../utils/moneyUtils.js';
 import { formatDate } from '../utils/dateUtils.js';
 import initialExpensesList from './InitialExpensesList.js';
+import { getEndOfDay } from './EndOfDay.js';
 
 /**
  * Dashboard class manages the main dashboard view
@@ -48,12 +49,16 @@ export class Dashboard {
     this.hintAddBtn = document.getElementById('hint-add-expenses-btn');
     this.hintDismissBtn = document.getElementById('hint-dismiss-btn');
 
+    // End of day button
+    this.endOfDayBtn = document.getElementById('end-of-day-btn');
+
     // Bind methods
     this.handleStateChange = this.handleStateChange.bind(this);
     this.handleToggleExpenses = this.handleToggleExpenses.bind(this);
     this.handleManageInitialExpenses = this.handleManageInitialExpenses.bind(this);
     this.handleInfoClick = this.handleInfoClick.bind(this);
     this.handleHintDismiss = this.handleHintDismiss.bind(this);
+    this.handleEndOfDay = this.handleEndOfDay.bind(this);
 
     // Track collapse state
     this.expensesExpanded = true;
@@ -131,6 +136,23 @@ export class Dashboard {
     // Listen for initial expense changes
     document.addEventListener('initial-expense-added', () => {
       console.log('Initial expense added, re-rendering dashboard');
+      this.render();
+    });
+
+    // End of day button
+    if (this.endOfDayBtn) {
+      this.endOfDayBtn.addEventListener('click', this.handleEndOfDay);
+    }
+
+    // Listen for day-reconciled event
+    document.addEventListener('day-reconciled', () => {
+      console.log('Day reconciled, re-rendering dashboard');
+      this.render();
+    });
+
+    // Listen for budget-updated event (from EndOfDay)
+    document.addEventListener('budget-updated', () => {
+      console.log('Budget updated, re-rendering dashboard');
       this.render();
     });
   }
@@ -463,6 +485,21 @@ Daily Budget = (Current Balance - Committed Funds) ÷ Days Remaining
 This helps you avoid overspending and ensures you can cover your obligations.`;
 
     alert(message);
+  }
+
+  /**
+   * Handle end of day button click
+   * @private
+   */
+  handleEndOfDay() {
+    console.log('Opening End of Day modal...');
+    try {
+      const endOfDay = getEndOfDay();
+      endOfDay.open();
+    } catch (error) {
+      console.error('Error opening End of Day modal:', error);
+      alert('End of Day feature is not available yet. Please try again later.');
+    }
   }
 
   /**

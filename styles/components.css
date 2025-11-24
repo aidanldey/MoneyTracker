@@ -842,6 +842,223 @@
    END OF DAY MODAL
    ======================================== */
 
+/* Modal container */
+.eod-modal {
+  z-index: 2000;
+}
+
+.eod-modal .modal-content {
+  max-width: 600px;
+}
+
+/* Scenario containers */
+.eod-scenario {
+  animation: slideDown 0.3s ease;
+}
+
+/* Scenario headers */
+.eod-header {
+  padding: var(--spacing-xl);
+  border-radius: var(--radius-md);
+  margin-bottom: var(--spacing-xl);
+  text-align: center;
+}
+
+.eod-header-success {
+  background-color: rgba(16, 185, 129, 0.1);
+  border: 2px solid var(--color-status-good);
+}
+
+.eod-header-warning {
+  background-color: rgba(245, 158, 11, 0.1);
+  border: 2px solid var(--color-status-warning);
+}
+
+.eod-scenario-title {
+  font-size: var(--font-size-base);
+  font-weight: var(--font-weight-bold);
+  color: var(--color-text);
+  margin: 0 0 var(--spacing-sm) 0;
+}
+
+.eod-scenario-subtitle {
+  font-size: var(--font-size-small);
+  color: var(--color-text);
+  opacity: 0.8;
+  margin: 0;
+}
+
+/* Stats section */
+.eod-stats {
+  background-color: var(--color-surface);
+  border-radius: var(--radius-md);
+  padding: var(--spacing-lg);
+  margin-bottom: var(--spacing-xl);
+}
+
+.eod-stat-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--spacing-md) 0;
+}
+
+.eod-stat-row + .eod-stat-row {
+  border-top: 1px solid var(--color-border);
+}
+
+.eod-stat-highlight {
+  padding-top: var(--spacing-lg);
+  margin-top: var(--spacing-sm);
+  border-top: 2px solid var(--color-border) !important;
+}
+
+.eod-label {
+  font-size: var(--font-size-small);
+  color: var(--color-text);
+  opacity: 0.7;
+  font-weight: var(--font-weight-medium);
+}
+
+.eod-value {
+  font-size: var(--font-size-base);
+  font-weight: var(--font-weight-bold);
+  color: var(--color-text);
+}
+
+.eod-value-success {
+  color: var(--color-status-good);
+  font-size: var(--font-size-card-value);
+}
+
+.eod-value-warning {
+  color: var(--color-status-danger);
+  font-size: var(--font-size-card-value);
+}
+
+/* Question section */
+.eod-question {
+  text-align: center;
+  margin-bottom: var(--spacing-xl);
+}
+
+.eod-question p {
+  font-size: var(--font-size-base);
+  font-weight: var(--font-weight-medium);
+  color: var(--color-text);
+  margin: 0;
+}
+
+/* Options section */
+.eod-options {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-md);
+}
+
+.eod-option-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  padding: var(--spacing-lg);
+  background-color: var(--color-surface);
+  border: 2px solid var(--color-border);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-align: left;
+}
+
+.eod-option-btn:hover:not(:disabled) {
+  border-color: var(--color-primary);
+  background-color: rgba(59, 130, 246, 0.05);
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+}
+
+.eod-option-btn:active:not(:disabled) {
+  transform: translateY(0);
+  box-shadow: var(--shadow-sm);
+}
+
+.eod-option-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.eod-option-content {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-md);
+  margin-bottom: var(--spacing-sm);
+}
+
+.eod-option-icon {
+  font-size: 2rem;
+  line-height: 1;
+  flex-shrink: 0;
+}
+
+.eod-option-text {
+  flex: 1;
+}
+
+.eod-option-text strong {
+  display: block;
+  font-size: var(--font-size-base);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text);
+  margin-bottom: var(--spacing-xs);
+}
+
+.eod-option-description {
+  font-size: var(--font-size-small);
+  color: var(--color-text);
+  opacity: 0.7;
+  margin: 0;
+  line-height: 1.4;
+}
+
+/* Preview text */
+.eod-preview {
+  font-size: var(--font-size-small);
+  color: var(--color-primary);
+  background-color: rgba(59, 130, 246, 0.1);
+  padding: var(--spacing-sm) var(--spacing-md);
+  border-radius: var(--radius-sm);
+  margin: 0;
+  font-weight: var(--font-weight-medium);
+  border-left: 3px solid var(--color-primary);
+}
+
+/* Warning section */
+.eod-warning {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-md);
+  padding: var(--spacing-md);
+  background-color: rgba(245, 158, 11, 0.1);
+  border: 1px solid var(--color-status-warning);
+  border-radius: var(--radius-md);
+  margin-bottom: var(--spacing-lg);
+}
+
+.eod-warning .warning-icon {
+  font-size: 1.5rem;
+  line-height: 1;
+  flex-shrink: 0;
+}
+
+.eod-warning .warning-text {
+  font-size: var(--font-size-small);
+  color: var(--color-text);
+  margin: 0;
+  line-height: 1.4;
+  font-weight: var(--font-weight-medium);
+}
+
+/* Old eod-summary styles (keeping for backward compatibility) */
 .eod-summary {
   text-align: center;
 }
@@ -850,13 +1067,6 @@
   font-size: var(--font-size-base);
   font-weight: var(--font-weight-medium);
   color: var(--color-text);
-  margin-bottom: var(--spacing-xl);
-}
-
-.eod-stats {
-  background-color: var(--color-surface);
-  border-radius: var(--radius-md);
-  padding: var(--spacing-lg);
   margin-bottom: var(--spacing-xl);
 }
 
@@ -870,18 +1080,6 @@
 
 .eod-stat:last-child {
   border-bottom: none;
-}
-
-.eod-label {
-  font-size: var(--font-size-small);
-  color: var(--color-text);
-  opacity: 0.7;
-}
-
-.eod-value {
-  font-size: var(--font-size-base);
-  font-weight: var(--font-weight-semibold);
-  color: var(--color-text);
 }
 
 /* ========================================
