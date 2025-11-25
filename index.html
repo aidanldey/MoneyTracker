@@ -6,6 +6,15 @@
   <meta name="description" content="Daily Budget Tracker - Manage your daily spending budget and track expenses">
   <title>Daily Budget Tracker</title>
 
+  <!-- PWA Meta Tags -->
+  <link rel="manifest" href="/manifest.json">
+  <meta name="theme-color" content="#2563eb">
+  <link rel="icon" type="image/svg+xml" href="/icons/favicon.svg">
+  <link rel="apple-touch-icon" href="/icons/apple-touch-icon.svg">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="Budget Tracker">
+
   <!-- Styles -->
   <link rel="stylesheet" href="styles/variables.css">
   <link rel="stylesheet" href="styles/base.css">
@@ -1110,7 +1119,123 @@
     </div>
   </div>
 
+  <!-- PWA Install Banner (hidden by default) -->
+  <div id="pwa-install-banner" class="install-banner" style="display: none;">
+    <div class="install-banner-content">
+      <span class="install-icon">📱</span>
+      <div class="install-text">
+        <strong>Install Budget Tracker</strong>
+        <p>Add to home screen for quick access</p>
+      </div>
+    </div>
+    <div class="install-actions">
+      <button id="pwa-install-btn" class="btn btn-primary btn-small">Install</button>
+      <button id="pwa-dismiss-btn" class="btn btn-text btn-small">Not now</button>
+    </div>
+  </div>
+
   <!-- Scripts -->
   <script type="module" src="js/app.js"></script>
+
+  <!-- PWA Service Worker Registration -->
+  <script>
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/service-worker.js')
+          .then(registration => {
+            console.log('✅ Service Worker registered:', registration.scope);
+
+            // Check for updates periodically
+            setInterval(() => {
+              registration.update();
+            }, 60 * 60 * 1000); // Check every hour
+          })
+          .catch(error => {
+            console.error('❌ Service Worker registration failed:', error);
+          });
+      });
+    }
+
+    // PWA Install Prompt
+    let deferredPrompt;
+    const installBanner = document.getElementById('pwa-install-banner');
+    const installBtn = document.getElementById('pwa-install-btn');
+    const dismissBtn = document.getElementById('pwa-dismiss-btn');
+
+    // Listen for beforeinstallprompt event
+    window.addEventListener('beforeinstallprompt', (e) => {
+      // Prevent the mini-infobar from appearing on mobile
+      e.preventDefault();
+      // Stash the event so it can be triggered later
+      deferredPrompt = e;
+
+      // Check if user has previously dismissed
+      const dismissed = localStorage.getItem('pwa-install-dismissed');
+      if (!dismissed) {
+        // Show the install banner
+        installBanner.style.display = 'flex';
+      }
+    });
+
+    // Handle install button click
+    if (installBtn) {
+      installBtn.addEventListener('click', async () => {
+        if (!deferredPrompt) {
+          return;
+        }
+
+        // Show the install prompt
+        deferredPrompt.prompt();
+
+        // Wait for the user to respond to the prompt
+        const { outcome } = await deferredPrompt.userChoice;
+        console.log(`User response to install prompt: ${outcome}`);
+
+        // Clear the deferredPrompt
+        deferredPrompt = null;
+
+        // Hide the banner
+        installBanner.style.display = 'none';
+      });
+    }
+
+    // Handle dismiss button click
+    if (dismissBtn) {
+      dismissBtn.addEventListener('click', () => {
+        installBanner.style.display = 'none';
+        // Remember dismissal for 7 days
+        const expiryTime = Date.now() + (7 * 24 * 60 * 60 * 1000);
+        localStorage.setItem('pwa-install-dismissed', expiryTime);
+      });
+    }
+
+    // Check if dismissal has expired
+    const dismissed = localStorage.getItem('pwa-install-dismissed');
+    if (dismissed && Date.now() > parseInt(dismissed)) {
+      localStorage.removeItem('pwa-install-dismissed');
+    }
+
+    // Listen for app installed event
+    window.addEventListener('appinstalled', () => {
+      console.log('✅ PWA was installed');
+      installBanner.style.display = 'none';
+      deferredPrompt = null;
+    });
+
+    // Handle URL shortcuts
+    const urlParams = new URLSearchParams(window.location.search);
+    const action = urlParams.get('action');
+    if (action) {
+      window.addEventListener('load', () => {
+        setTimeout(() => {
+          if (action === 'add-expense') {
+            document.querySelector('[data-action="add-expense"]')?.click();
+          } else if (action === 'view-history') {
+            document.querySelector('[data-action="view-history"]')?.click();
+          }
+        }, 500);
+      });
+    }
+  </script>
 </body>
 </html>

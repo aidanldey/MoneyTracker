@@ -3077,6 +3077,120 @@
 }
 
 /* ========================================
+   PWA INSTALL BANNER
+   ======================================== */
+
+.install-banner {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: linear-gradient(135deg, var(--color-primary), var(--color-primary-dark));
+  color: white;
+  padding: var(--spacing-md) var(--spacing-lg);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--spacing-md);
+  box-shadow: 0 -4px 12px rgba(0, 0, 0, 0.15);
+  z-index: 1000;
+  animation: slideUp 0.3s ease-out;
+}
+
+@keyframes slideUp {
+  from {
+    transform: translateY(100%);
+  }
+  to {
+    transform: translateY(0);
+  }
+}
+
+.install-banner-content {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-md);
+  flex: 1;
+}
+
+.install-icon {
+  font-size: 2rem;
+  flex-shrink: 0;
+}
+
+.install-text {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-xs);
+}
+
+.install-text strong {
+  font-size: var(--font-size-base);
+  font-weight: var(--font-weight-bold);
+}
+
+.install-text p {
+  font-size: var(--font-size-small);
+  margin: 0;
+  opacity: 0.9;
+}
+
+.install-actions {
+  display: flex;
+  gap: var(--spacing-sm);
+  flex-shrink: 0;
+}
+
+.install-actions .btn-small {
+  padding: var(--spacing-sm) var(--spacing-md);
+  font-size: var(--font-size-small);
+  white-space: nowrap;
+}
+
+.install-actions .btn-primary {
+  background: white;
+  color: var(--color-primary);
+  border: none;
+}
+
+.install-actions .btn-primary:hover {
+  background: var(--color-background);
+}
+
+.install-actions .btn-text {
+  color: white;
+  text-decoration: underline;
+}
+
+.install-actions .btn-text:hover {
+  opacity: 0.8;
+}
+
+/* Mobile responsive */
+@media (max-width: 640px) {
+  .install-banner {
+    flex-direction: column;
+    align-items: stretch;
+    padding: var(--spacing-md);
+  }
+
+  .install-banner-content {
+    flex-direction: column;
+    text-align: center;
+    align-items: center;
+  }
+
+  .install-actions {
+    width: 100%;
+    flex-direction: column;
+  }
+
+  .install-actions .btn {
+    width: 100%;
+  }
+}
+
+/* ========================================
    PRINT STYLES
    ======================================== */
 

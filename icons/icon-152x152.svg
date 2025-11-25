@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="152" height="152" viewBox="0 0 152 152" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background -->
+  <rect width="152" height="152" rx="15.200000000000001" fill="#2563eb"/>
+
+  <!-- Inner content area (for maskable) -->
+  <g transform="translate(0, 0)">
+    <!-- Dollar sign -->
+    <text
+      x="76"
+      y="98.8"
+      font-family="Arial, sans-serif"
+      font-size="91.2"
+      font-weight="bold"
+      fill="white"
+      text-anchor="middle">$</text>
+
+    <!-- Small chart bars at bottom -->
+    <rect x="38" y="114" width="12.16" height="22.8" fill="white" opacity="0.7" rx="2"/>
+    <rect x="57.76" y="103.36000000000001" width="12.16" height="33.44" fill="white" opacity="0.7" rx="2"/>
+    <rect x="77.52" y="109.44" width="12.16" height="27.36" fill="white" opacity="0.7" rx="2"/>
+    <rect x="97.28" y="98.8" width="12.16" height="38" fill="white" opacity="0.7" rx="2"/>
+  </g>
+</svg>
