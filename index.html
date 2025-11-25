@@ -158,6 +158,12 @@
           aria-label="Start new pay period">
           Start New Period
         </button>
+        <button
+          class="btn btn-secondary"
+          data-action="manage-data"
+          aria-label="Manage data backup and restore">
+          Manage Data
+        </button>
       </section>
 
       <!-- FIRST-TIME USER HINT -->
@@ -1010,6 +1016,93 @@
             </button>
             <button id="export-archive-btn" class="btn btn-secondary">
               📥 Export CSV
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- DATA MANAGER MODAL -->
+  <div
+    id="data-manager-modal"
+    class="modal data-manager-modal"
+    hidden>
+    <div class="modal-overlay" data-action="close-modal"></div>
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2 class="modal-title">Data Management</h2>
+        <button
+          class="icon-button"
+          data-action="close-modal"
+          aria-label="Close modal">
+          ✕
+        </button>
+      </div>
+
+      <div class="modal-body">
+        <!-- Backup Info -->
+        <div class="backup-info-section">
+          <h3 class="section-heading">Backup Information</h3>
+          <div class="info-grid">
+            <div class="info-item">
+              <span class="info-label">Last Backup:</span>
+              <span id="last-backup-date" class="info-value">Never</span>
+            </div>
+            <div class="info-item">
+              <span class="info-label">Data Size:</span>
+              <span id="data-size" class="info-value">0 KB</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Actions -->
+        <div class="data-actions-section">
+          <h3 class="section-heading">Actions</h3>
+
+          <button id="export-backup-btn" class="action-button action-primary">
+            <span class="action-icon">📥</span>
+            <div class="action-content">
+              <div class="action-title">Backup Data</div>
+              <div class="action-description">Export all your data to a JSON file</div>
+            </div>
+          </button>
+
+          <button id="import-backup-btn" class="action-button action-secondary">
+            <span class="action-icon">📤</span>
+            <div class="action-content">
+              <div class="action-title">Restore from Backup</div>
+              <div class="action-description">Import data from a backup file</div>
+            </div>
+          </button>
+
+          <button id="clear-data-btn" class="action-button action-danger">
+            <span class="action-icon">⚠️</span>
+            <div class="action-content">
+              <div class="action-title">Clear All Data</div>
+              <div class="action-description">Permanently delete all data (create backup first!)</div>
+            </div>
+          </button>
+
+          <!-- Hidden file input -->
+          <input type="file" id="backup-file-input" accept=".json" style="display: none;">
+        </div>
+
+        <!-- Import Preview Section (hidden by default) -->
+        <div id="import-preview" class="import-preview-section" style="display: none;">
+          <div id="preview-content">
+            <!-- Preview content will be inserted here -->
+          </div>
+
+          <div class="preview-actions">
+            <button id="merge-data-btn" class="btn btn-secondary">
+              Merge with Existing
+            </button>
+            <button id="replace-data-btn" class="btn btn-warning">
+              Replace All Data
+            </button>
+            <button id="cancel-preview-btn" class="btn btn-text">
+              Cancel
             </button>
           </div>
         </div>

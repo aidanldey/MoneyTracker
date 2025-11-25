@@ -16,6 +16,7 @@ import { initEndOfDay } from './features/EndOfDay.js';
 import { initSavingsFund } from './features/SavingsFund.js';
 import { initExpenseHistory } from './features/ExpenseHistory.js';
 import { initPayPeriodManager } from './features/PayPeriodManager.js';
+import { initDataManager } from './features/DataManager.js';
 import { getToday } from './utils/dateUtils.js';
 
 /**
@@ -59,6 +60,9 @@ class App {
 
       // Initialize pay period manager
       initPayPeriodManager();
+
+      // Initialize data manager
+      initDataManager();
 
       // Set up global event listeners
       this.setupEventListeners();
